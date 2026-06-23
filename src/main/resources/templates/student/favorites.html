@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bite — Favorites | ServeFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/Campus_Bite_Logo_Inside_Page.png}">
+    <style>
+        .favorite-btn {
+            background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--accent-red); margin-left: auto;
+        }
+    </style>
+</head>
+<body class="student-home-page" style="background: var(--bg-primary);">
+
+<!-- TOP NAVIGATION -->
+<nav class="student-nav">
+    <div class="student-nav-brand">
+        <a href="/student/home" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <img th:src="@{/images/Campus_Bite_Logo_Inside_Page.png}" alt="Campus Bite" class="nav-logo" style="width: auto; height: 36px; border-radius: 0;" onerror="this.style.display='none'">
+        </a>
+    </div>
+    <div class="student-nav-links">
+        <a href="/student/home" class="student-nav-link">Menu</a>
+        <a href="/student/my-orders" class="student-nav-link">My Orders</a>
+        <a href="/student/favorites" class="student-nav-link active">Favorites</a>
+        <a href="/student/profile" class="student-nav-link">Profile</a>
+    </div>
+    <div class="student-nav-right">
+        <span id="studentGreeting" class="greeting-text"></span>
+        <a href="/student/checkout" class="btn-cart" style="text-decoration:none;">
+            🛒 Cart <span id="cartCount" class="cart-badge">0</span>
+        </a>
+    </div>
+</nav>
+
+<!-- BOTTOM NAVIGATION FOR MOBILE -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-links">
+        <a href="/student/home" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🍽️</span>
+            <span>Menu</span>
+        </a>
+        <a href="/student/my-orders" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🧾</span>
+            <span>Orders</span>
+        </a>
+        <a href="/student/favorites" class="bottom-nav-link active">
+            <span class="bottom-nav-icon">❤️</span>
+            <span>Favorites</span>
+        </a>
+        <a href="/student/checkout" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🛒</span>
+            <span>Cart</span>
+        </a>
+        <a href="/student/profile" class="bottom-nav-link">
+            <span class="bottom-nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </div>
+</nav>
+
+<div style="max-width: 900px; margin: calc(var(--nav-h) + 40px) auto 80px; padding: 24px;">
+    <div class="page-header" style="margin-bottom: 24px;">
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-dark);">Your Favorites ❤️</h1>
+        <p class="page-subtitle" style="color: var(--text-light);">Quick access to the meals you love the most.</p>
+    </div>
+
+    <div id="favoritesGrid" class="menu-grid">
+        <div class="loading-state">Loading favorites...</div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script th:src="@{/js/student.js}"></script>
+<script>
+    let favoriteItems = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFavorites();
+    });
+
+    async function loadFavorites() {
+        const grid = document.getElementById('favoritesGrid');
+        try {
+            const res = await fetch('/api/student/favorites', {
+                headers: { 'Authorization': 'Bearer ' + studentToken }
+            });
+            if (res.ok) {
+                favoriteItems = await res.json();
+                renderFavorites();
+            } else {
+                grid.innerHTML = '<div class="error-state">Failed to load favorites.</div>';
+            }
+        } catch (e) {
+            grid.innerHTML = '<div class="error-state">Error loading favorites. Please refresh.</div>';
+        }
+    }
+
+    function renderFavorites() {
+        const grid = document.getElementById('favoritesGrid');
+        if (!favoriteItems.length) {
+            grid.innerHTML = `
+                <div class="empty-orders" style="grid-column: 1/-1;">
+                    <span class="empty-icon" style="font-size:3rem;">🍽️</span>
+                    <h3>No favorites yet</h3>
+                    <p>Go to the menu to add your favorite items!</p>
+                    <a href="/student/home" class="btn-primary" style="display:inline-block; margin-top:12px;">Go to Menu →</a>
+                </div>`;
+            return;
+        }
+
+        grid.innerHTML = favoriteItems.map(item => buildFavoriteCard(item)).join('');
+    }
+
+    function buildFavoriteCard(item) {
+        const outOfStock = (item.quantityAvailable !== null && item.quantityAvailable <= 0);
+        const vegDot = item.isVeg
+            ? '<span class="veg-dot veg-dot-green" title="Vegetarian">🟢</span>'
+            : '<span class="veg-dot veg-dot-red" title="Non-Vegetarian">🔴</span>';
+
+        const imgSrc = item.imageUrl || '/images/placeholder-food.jpg';
+
+        return `
+            <div class="menu-card ${outOfStock ? 'out-of-stock' : ''}" id="fav-item-${item.id}">
+                <div class="menu-card-img-wrapper">
+                    <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name)}" class="menu-card-img" onerror="this.src='/images/placeholder-food.jpg'">
+                    ${outOfStock ? '<div class="sold-out-overlay">SOLD OUT</div>' : ''}
+                </div>
+                <div class="menu-card-body">
+                    <div class="menu-card-header-row">
+                        ${vegDot}
+                        <h3 class="menu-item-name">${escapeHtml(item.name)}</h3>
+                        <button class="favorite-btn" onclick="removeFavorite(${item.id})">❤️</button>
+                    </div>
+                    <p class="menu-item-desc">${escapeHtml(item.description || '')}</p>
+                    <div class="menu-card-footer">
+                        <span class="menu-item-price">₹${item.price?.toFixed ? item.price.toFixed(2) : item.price}</span>
+                        <button class="btn-add-cart"
+                                onclick="addToCartFav(${item.id}, '${escapeHtml(item.name).replace(/'/g, "\\'")}', ${item.price})"
+                                ${outOfStock ? 'disabled' : ''}
+                                id="add-btn-${item.id}">
+                            ${outOfStock ? 'Unavailable' : '+ Add'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function removeFavorite(id) {
+        try {
+            const res = await fetch('/api/student/favorites/' + id, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + studentToken }
+            });
+            if (res.ok) {
+                showToast('Removed from favorites');
+                favoriteItems = favoriteItems.filter(i => i.id !== id);
+                renderFavorites();
+            }
+        } catch (e) {
+            showToast('Failed to remove favorite', 'error');
+        }
+    }
+    
+    function addToCartFav(id, name, price) {
+        // Mock a full item object since addToCart expects it
+        const item = {id, name, price};
+        const existing = cart.find(c => c.item.id === id);
+        if (existing) {
+            existing.quantity++;
+        } else {
+            cart.push({ item, quantity: 1 });
+        }
+        localStorage.setItem('studentCart', JSON.stringify(cart));
+        updateCartUI();
+        showToast(`${name} added to cart 🛒`);
+
+        const btn = document.getElementById(`add-btn-${id}`);
+        if (btn) {
+            btn.textContent = 'Added ✓';
+            btn.classList.add('btn-added');
+            setTimeout(() => {
+                btn.textContent = '+ Add';
+                btn.classList.remove('btn-added');
+            }, 1000);
+        }
+    }
+</script>
+</body>
+</html>

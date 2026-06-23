@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBill — Transaction History | ServeFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/biller.css}">
+</head>
+<body class="history-page">
+
+<nav class="top-nav">
+    <div class="nav-brand">
+        <span class="nav-title">QuickBill</span>
+        <span class="nav-sub">by ServeFlow</span>
+    </div>
+    <div class="nav-links">
+        <a href="/biller/billing" class="nav-link">🧾 Billing</a>
+        <a href="/biller/orders" class="nav-link">📦 Online Orders</a>
+        <a href="/biller/history" class="nav-link active">📋 History</a>
+        <a href="/biller/settings" class="nav-link">⚙️ Settings</a>
+    </div>
+    <div class="nav-user">
+        <span id="navUsername" class="nav-username"></span>
+        <button onclick="logoutBiller()" class="btn-logout">Logout</button>
+    </div>
+</nav>
+
+<div class="page-content">
+    <div class="page-header">
+        <h1>Transaction History</h1>
+        <p class="page-subtitle">All counter bills and online orders — with match type audit</p>
+    </div>
+
+    <div class="filter-bar">
+        <select id="historyFilter" onchange="loadHistory()">
+            <option value="ALL">All Transactions</option>
+            <option value="PAID">Paid / Matched</option>
+        </select>
+        <button onclick="loadHistory()" class="btn-secondary">🔄 Refresh</button>
+    </div>
+
+    <!-- History Table -->
+    <div class="table-container">
+        <table class="data-table" id="historyTable">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Student</th>
+                    <th>Items</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Placed At</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <tr><td colspan="7" class="loading-cell">Loading history...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const billerToken = localStorage.getItem('billerToken');
+    if (!billerToken) window.location.href = '/biller/login';
+    document.getElementById('navUsername').textContent = localStorage.getItem('billerUsername') || 'Biller';
+
+    async function loadHistory() {
+        const filter = document.getElementById('historyFilter').value;
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">Loading...</td></tr>';
+
+        try {
+            // Using the new unified /history endpoint. Filtering is done locally for now, 
+            // or we just fetch all and filter in JS if needed.
+            const url = '/api/biller/history';
+
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + billerToken }
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('billerToken');
+                localStorage.removeItem('billerUsername');
+                window.location.href = '/biller/login';
+                return;
+            }
+
+            let orders = await res.json();
+            
+            if (filter !== 'ALL') {
+                orders = orders.filter(o => o.status === filter || (filter === 'PAID' && o.status === 'MATCHED'));
+            }
+
+            if (!orders.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">No transactions found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = orders.map(o => `
+                <tr>
+                    <td><span class="id-badge">${o.id}</span></td>
+                    <td>${o.studentEmail || '—'}</td>
+                    <td>${o.itemSummary || '—'}</td>
+                    <td class="amount-cell">₹${o.totalAmount?.toFixed(2) || '0.00'}</td>
+                    <td><span class="badge badge-${getStatusColor(o.status)}">${o.status}</span></td>
+                    <td><span class="badge badge-${getPaymentColor(o.paymentStatus)}">${o.paymentStatus || '—'}</span></td>
+                    <td>${o.placedAt ? new Date(o.placedAt).toLocaleString('en-IN') : '—'}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="7" class="error-cell">Error loading history.</td></tr>';
+        }
+    }
+
+    function getStatusColor(s) {
+        if (s === 'PAID' || s === 'READY' || s === 'MATCHED' || s === 'CASH_CONFIRMED') return 'success';
+        if (s === 'PICKED_UP' || s === 'SERVED') return 'info';
+        return 'warning';
+    }
+
+    function getPaymentColor(s) {
+        if (s === 'PAID' || s === 'CASH' || s.startsWith('UPI')) return 'success';
+        if (s === 'FAILED') return 'danger';
+        return 'warning';
+    }
+
+    function logoutBiller() {
+        localStorage.clear();
+        window.location.href = '/biller/login';
+    }
+
+    loadHistory();
+</script>
+</body>
+</html>

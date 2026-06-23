@@ -1,24 +1,41 @@
-# Spring Boot
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-*.class
+# ═══════════════════════════════════════════════════════
+# ServeFlow .gitignore
+# ═══════════════════════════════════════════════════════
 
-# Logs
+# ── BUILD OUTPUTS ────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven wrapper JAR (keep this)
+!.mvn/wrapper/maven-wrapper.jar
+
+# ── SECRETS — NEVER COMMIT THESE ─────────────────────────
+# The application.properties contains real API keys locally.
+# This ensures you never accidentally push them to GitHub.
+src/main/resources/application-local.properties
+application-local.properties
+
+# ── LOGS ─────────────────────────────────────────────────
 logs/
 *.log
+spring.log
 
-# IntelliJ IDEA
+# ── UPLOADS ──────────────────────────────────────────────
+uploads/
+
+# ── INTELLIJ IDEA ─────────────────────────────────────────
 .idea/
 *.iws
 *.iml
 *.ipr
 
-# VS Code
+# ── VS CODE ───────────────────────────────────────────────
 .vscode/
 
-# STS / Eclipse
+# ── ECLIPSE / STS ─────────────────────────────────────────
 .apt_generated
 .classpath
 .factorypath
@@ -27,9 +44,15 @@ logs/
 .springBeans
 .sts4-cache
 
-# Mac OS
+# ── OS FILES ──────────────────────────────────────────────
 .DS_Store
-
-# Windows OS
 Thumbs.db
 desktop.ini
+
+# ── ENVIRONMENT ───────────────────────────────────────────
+.env
+*.env
+
+# ── DOCKER ────────────────────────────────────────────────
+# Uncomment when docker-compose is set up
+# docker-data/

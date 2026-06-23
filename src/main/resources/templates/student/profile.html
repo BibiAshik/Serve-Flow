@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bite — Profile | ServeFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/Campus_Bite_Logo_Inside_Page.png}">
+</head>
+<body class="student-home-page" style="background: var(--bg-primary);">
+
+<!-- TOP NAVIGATION -->
+<nav class="student-nav">
+    <div class="student-nav-brand">
+        <a href="/student/home" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <img th:src="@{/images/Campus_Bite_Logo_Inside_Page.png}" alt="Campus Bite" class="nav-logo" style="width: auto; height: 36px; border-radius: 0;" onerror="this.style.display='none'">
+        </a>
+    </div>
+    <div class="student-nav-links">
+        <a href="/student/home" class="student-nav-link">Menu</a>
+        <a href="/student/my-orders" class="student-nav-link">My Orders</a>
+        <a href="/student/favorites" class="student-nav-link">Favorites</a>
+        <a href="/student/profile" class="student-nav-link active">Profile</a>
+    </div>
+    <div class="student-nav-right">
+        <span id="studentGreeting" class="greeting-text"></span>
+        <a href="/student/checkout" class="btn-cart" style="text-decoration:none;">
+            🛒 Cart <span id="cartCount" class="cart-badge">0</span>
+        </a>
+    </div>
+</nav>
+
+<!-- BOTTOM NAVIGATION FOR MOBILE -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-links">
+        <a href="/student/home" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🍽️</span>
+            <span>Menu</span>
+        </a>
+        <a href="/student/my-orders" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🧾</span>
+            <span>Orders</span>
+        </a>
+        <a href="/student/favorites" class="bottom-nav-link">
+            <span class="bottom-nav-icon">❤️</span>
+            <span>Favorites</span>
+        </a>
+        <a href="/student/checkout" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🛒</span>
+            <span>Cart</span>
+        </a>
+        <a href="/student/profile" class="bottom-nav-link active">
+            <span class="bottom-nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </div>
+</nav>
+
+<div style="max-width: 600px; margin: calc(var(--nav-h) + 40px) auto 80px; padding: 32px; background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom: 32px;">
+        <div id="profileImageContainer" style="width:100px; height:100px; border-radius:50%; background:var(--gradient-main); display:flex; align-items:center; justify-content:center; color:white; font-size:2.5rem; font-weight:700; margin-bottom:16px; overflow:hidden;">
+            <span id="profileInitial">S</span>
+            <img id="profilePicDisplay" src="" style="display:none; width:100%; height:100%; object-fit:cover;" alt="Profile Picture">
+        </div>
+        <input type="file" id="profilePicInput" accept="image/*" style="display:none; margin-bottom:16px;">
+
+        <h2 id="profileName" style="font-size:1.8rem; font-weight:800; color:var(--text-dark);">Student Name</h2>
+        <p id="profileEmail" style="color:var(--text-light);">student@sairamtap.edu.in</p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:20px;">
+        <div>
+            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-medium); margin-bottom:6px;">College ID / Roll Number</label>
+            <input type="text" id="collegeId" placeholder="e.g. CS21045" readonly style="width:100%; padding:12px; border-radius:var(--radius-md); border:1px solid var(--border-medium); background-color:var(--bg-secondary);">
+        </div>
+        <div>
+            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-medium); margin-bottom:6px;">Phone Number (Optional)</label>
+            <input type="text" id="phoneNumber" placeholder="e.g. 9876543210" readonly style="width:100%; padding:12px; border-radius:var(--radius-md); border:1px solid var(--border-medium); background-color:var(--bg-secondary);">
+        </div>
+        
+        <button onclick="enableEditMode()" class="btn-primary" id="editProfileBtn" style="margin-top:12px; border-radius:var(--radius-full); width: 100%;">
+            Edit Profile
+        </button>
+
+        <button onclick="saveProfile()" class="btn-checkout" id="saveProfileBtn" style="display:none; margin-top:12px; border-radius:var(--radius-full);">
+            Save Profile
+        </button>
+
+        <button onclick="logoutStudent()" class="btn-logout-student" style="margin-top:12px; padding: 12px; width: 100%; border-radius: var(--radius-full); font-weight: 600;">
+            Logout
+        </button>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script th:src="@{/js/student.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadProfilePic();
+        
+        try {
+            const res = await fetch('/api/student/profile', {
+                headers: { 'Authorization': 'Bearer ' + studentToken }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('profileName').textContent = data.name || 'Student Name';
+                document.getElementById('profileEmail').textContent = data.email || '';
+                document.getElementById('profileInitial').textContent = (data.name ? data.name[0].toUpperCase() : 'S');
+                
+                if (data.collegeId) document.getElementById('collegeId').value = data.collegeId;
+                if (data.phone) document.getElementById('phoneNumber').value = data.phone;
+            }
+        } catch (e) {
+            console.error('Failed to load profile', e);
+        }
+    });
+
+    function loadProfilePic() {
+        const pic = localStorage.getItem('profilePic');
+        if (pic) {
+            document.getElementById('profilePicDisplay').src = pic;
+            document.getElementById('profilePicDisplay').style.display = 'block';
+            document.getElementById('profileInitial').style.display = 'none';
+        }
+    }
+
+    function enableEditMode() {
+        document.getElementById('collegeId').removeAttribute('readonly');
+        document.getElementById('collegeId').style.backgroundColor = 'white';
+        
+        document.getElementById('phoneNumber').removeAttribute('readonly');
+        document.getElementById('phoneNumber').style.backgroundColor = 'white';
+        
+        document.getElementById('profilePicInput').style.display = 'block';
+        
+        document.getElementById('editProfileBtn').style.display = 'none';
+        document.getElementById('saveProfileBtn').style.display = 'block';
+    }
+
+    function disableEditMode() {
+        document.getElementById('collegeId').setAttribute('readonly', 'true');
+        document.getElementById('collegeId').style.backgroundColor = 'var(--bg-secondary)';
+        
+        document.getElementById('phoneNumber').setAttribute('readonly', 'true');
+        document.getElementById('phoneNumber').style.backgroundColor = 'var(--bg-secondary)';
+        
+        document.getElementById('profilePicInput').style.display = 'none';
+        
+        document.getElementById('editProfileBtn').style.display = 'block';
+        document.getElementById('saveProfileBtn').style.display = 'none';
+    }
+
+    async function saveProfile() {
+        const btn = document.getElementById('saveProfileBtn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        
+        const collegeId = document.getElementById('collegeId').value;
+        const phone = document.getElementById('phoneNumber').value;
+        const picInput = document.getElementById('profilePicInput');
+
+        // Handle profile picture
+        if (picInput.files && picInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                localStorage.setItem('profilePic', e.target.result);
+                loadProfilePic();
+            }
+            reader.readAsDataURL(picInput.files[0]);
+        }
+        
+        try {
+            const res = await fetch('/api/student/profile', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + studentToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ collegeId, phone })
+            });
+            if (res.ok) {
+                showToast('Profile updated successfully');
+                disableEditMode();
+            } else {
+                showToast('Failed to update profile', 'error');
+            }
+        } catch (e) {
+            showToast('Failed to update profile', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save Profile';
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBill — Biller Login | ServeFlow</title>
+    <meta name="description" content="QuickBill biller portal login for ServeFlow canteen management system.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/biller.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/favicon.png}">
+</head>
+<body class="login-page">
+
+<div class="login-container">
+    <!-- LEFT PANEL — BRANDING -->
+    <div class="login-brand-panel">
+        <div class="brand-content">
+            <img th:src="@{/images/campus-bite-logo.png}" alt="ServeFlow Logo" class="brand-logo"
+                 onerror="this.style.display='none'">
+            <h1 class="brand-name">QuickBill</h1>
+            <p class="brand-tagline">Canteen Billing &amp; Token System</p>
+            <div class="brand-features">
+                <div class="feature-item">
+                    <span class="feature-icon">⚡</span>
+                    <span>Real-time payment matching</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🖨️</span>
+                    <span>Thermal token printing</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📊</span>
+                    <span>Live billing dashboard</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL — LOGIN FORM -->
+    <div class="login-form-panel">
+        <div class="login-form-wrapper">
+            <div class="login-header">
+                <h2>Biller Sign In</h2>
+                <p>Access the QuickBill dashboard</p>
+            </div>
+
+            <!-- Error message shown when login fails -->
+            <div id="loginError" class="alert alert-error" style="display:none;">
+                <span id="loginErrorMessage">Invalid username or password.</span>
+            </div>
+
+            <form id="billerLoginForm" onsubmit="handleBillerLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username"
+                           placeholder="Enter your username"
+                           autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password"
+                               placeholder="Enter your password"
+                               autocomplete="current-password" required>
+                        <button type="button" class="btn-toggle-pass" onclick="togglePassword()">👁</button>
+                    </div>
+                </div>
+                <button type="submit" id="loginBtn" class="btn-primary btn-full">
+                    <span id="loginBtnText">Sign In</span>
+                    <span id="loginSpinner" class="spinner" style="display:none;"></span>
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * handleBillerLogin — submits login credentials to /api/auth/biller/login
+     * and redirects to /biller/billing on success.
+     */
+    async function handleBillerLogin(event) {
+        event.preventDefault();
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+        const btnText = document.getElementById('loginBtnText');
+        const spinner = document.getElementById('loginSpinner');
+
+        // Show loading state
+        errorDiv.style.display = 'none';
+        loginBtn.disabled = true;
+        btnText.style.display = 'none';
+        spinner.style.display = 'inline-block';
+
+        try {
+            const response = await fetch('/api/auth/biller/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Store the JWT in localStorage — billing.js will use it for all API calls
+                localStorage.setItem('billerToken', data.token);
+                localStorage.setItem('billerUsername', data.username);
+                // Redirect to the main billing screen
+                window.location.href = '/biller/billing';
+            } else {
+                const err = await response.json().catch(() => ({}));
+                showError(err.message || 'Invalid username or password. Please try again.');
+            }
+        } catch (error) {
+            showError('Connection error. Please check your internet connection.');
+        } finally {
+            loginBtn.disabled = false;
+            btnText.style.display = 'inline';
+            spinner.style.display = 'none';
+        }
+    }
+
+    function showError(message) {
+        const errorDiv = document.getElementById('loginError');
+        document.getElementById('loginErrorMessage').textContent = message;
+        errorDiv.style.display = 'flex';
+    }
+
+    function togglePassword() {
+        const input = document.getElementById('password');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    // If already logged in, redirect directly to billing
+    if (localStorage.getItem('billerToken')) {
+        window.location.href = '/biller/billing';
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bite — My Orders | ServeFlow</title>
+    <meta name="description" content="View your Campus Bite food pre-orders and pickup tokens.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/Campus_Bite_Logo_Inside_Page.png}">
+</head>
+<body class="my-orders-page">
+
+<!-- TOP NAVIGATION -->
+<nav class="student-nav">
+    <div class="student-nav-brand">
+        <a href="/student/home" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <img th:src="@{/images/Campus_Bite_Logo_Inside_Page.png}" alt="Campus Bite" class="nav-logo" style="width: auto; height: 36px; border-radius: 0;" onerror="this.style.display='none'">
+        </a>
+    </div>
+    <div class="student-nav-links">
+        <a href="/student/home" class="student-nav-link">Menu</a>
+        <a href="/student/my-orders" class="student-nav-link active">My Orders</a>
+        <a href="/student/favorites" class="student-nav-link">Favorites</a>
+        <a href="/student/profile" class="student-nav-link">Profile</a>
+    </div>
+    <div class="student-nav-right">
+        <span id="studentGreeting" class="greeting-text"></span>
+        <a href="/student/checkout" class="btn-cart" style="text-decoration:none;">
+            🛒 Cart <span id="cartCount" class="cart-badge">0</span>
+        </a>
+    </div>
+</nav>
+
+<!-- BOTTOM NAVIGATION FOR MOBILE -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-links">
+        <a href="/student/home" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🍽️</span>
+            <span>Menu</span>
+        </a>
+        <a href="/student/my-orders" class="bottom-nav-link active">
+            <span class="bottom-nav-icon">🧾</span>
+            <span>Orders</span>
+        </a>
+        <a href="/student/favorites" class="bottom-nav-link">
+            <span class="bottom-nav-icon">❤️</span>
+            <span>Favorites</span>
+        </a>
+        <a href="/student/checkout" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🛒</span>
+            <span>Cart</span>
+        </a>
+        <a href="/student/profile" class="bottom-nav-link">
+            <span class="bottom-nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </div>
+</nav>
+
+<div class="my-orders-content">
+    <div class="page-header">
+        <h1>My Orders</h1>
+        <p class="page-subtitle">Your food pre-orders and pickup tokens</p>
+    </div>
+
+    <div id="ordersContainer" class="student-orders-grid">
+        <div class="loading-state">Loading your orders...</div>
+    </div>
+</div>
+
+<script>
+    const studentToken = localStorage.getItem('studentToken');
+    if (!studentToken) window.location.href = '/student/login';
+
+    const studentName = localStorage.getItem('studentName') || '';
+    document.getElementById('studentGreeting').textContent = studentName ? `Hi, ${studentName.split(' ')[0]}` : '';
+
+    function logoutStudent() {
+        localStorage.removeItem('studentToken');
+        localStorage.removeItem('studentName');
+        window.location.href = '/student/login';
+    }
+
+    async function loadMyOrders() {
+        const container = document.getElementById('ordersContainer');
+        try {
+            const res = await fetch('/api/online/my-orders', {
+                headers: { 'Authorization': 'Bearer ' + studentToken }
+            });
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = '/student/login';
+                return;
+            }
+            const orders = await res.json();
+
+            if (!orders.length) {
+                container.innerHTML = `
+                    <div class="empty-orders">
+                        <span class="empty-icon">🛒</span>
+                        <h3>No orders yet</h3>
+                        <p>Browse the menu and place your first order!</p>
+                        <a href="/student/home" class="btn-primary">Go to Menu →</a>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = orders.map(order => buildOrderCard(order)).join('');
+        } catch (err) {
+            container.innerHTML = '<div class="error-state">Error loading orders. Please refresh.</div>';
+        }
+    }
+
+    function buildOrderCard(order) {
+        const status = order.paymentStatus || 'PENDING';
+        const displayStatus = status === 'FAILED' ? 'PENDING' : status;
+        const statusClass = status === 'PAID' ? 'success' : 'warning';
+        const placedAt = order.placedAt ? new Date(order.placedAt).toLocaleString('en-IN') : '—';
+
+        let tokenSection = '';
+        if (order.token && status === 'PAID') {
+            if (order.status === 'SERVED') {
+                tokenSection = `
+                    <div class="token-display-card" style="opacity: 0.8; filter: grayscale(0.2);">
+                        <div class="token-number-display" style="font-size: 1.5rem; background: var(--accent-green); -webkit-text-fill-color: white; padding: 10px; border-radius: 10px; text-shadow: none;">Order Completed</div>
+                        <div class="token-item-info">${order.token.itemSummary || 'Your order'}</div>
+                        <p class="token-instruction">This order has been served and finished.</p>
+                    </div>`;
+            } else {
+                const safeSummary = (order.token.itemSummary || 'Your order').replace(/'/g, "\\'");
+                const safeAmount = order.token.amount || order.totalAmount?.toFixed(2);
+                tokenSection = `
+                    <div class="token-display-card" onclick="showTokenPopup(${order.id}, '${order.token.tokenNumber}', '${safeSummary}', '${safeAmount}')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <div class="token-number-display">#${order.token.tokenNumber}</div>
+                        <div class="token-item-info">${order.token.itemSummary || 'Your order'}</div>
+                        <div class="token-amount-info">₹${safeAmount}</div>
+                        <p class="token-instruction">Click to view full screen</p>
+                    </div>`;
+            }
+        } else if (status === 'PAID') {
+            tokenSection = `<div class="token-pending">Generating your token...</div>`;
+        } else if (status === 'FAILED') {
+            tokenSection = `<div class="payment-pending-msg">⏳ Payment pending (Previous transaction failed). Please try again from the menu.</div>`;
+        } else {
+            tokenSection = `<div class="payment-pending-msg">⏳ Payment pending. Complete payment in the checkout window.</div>`;
+        }
+
+        return `
+            <div class="student-order-card status-${displayStatus.toLowerCase()}">
+                <div class="order-card-top">
+                    <span class="order-id-label">Order #${order.id}</span>
+                    <span class="order-status-badge badge-${statusClass}">${displayStatus}</span>
+                </div>
+                <div class="order-meta">
+                    <span>₹${order.totalAmount?.toFixed(2) || '0.00'}</span>
+                    <span class="meta-sep">•</span>
+                    <span>${placedAt}</span>
+                </div>
+                ${tokenSection}
+            </div>`;
+    }
+
+    function showTokenPopup(orderId, tokenNumber, itemSummary, amount) {
+        const existing = document.getElementById('tokenModal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'tokenModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card token-success-modal" style="animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);">
+                <div class="token-success-icon">🎉</div>
+                <h2>Here is your Token</h2>
+                <p>Show this token at the counter to collect your food</p>
+                <div class="token-number-hero">#${tokenNumber}</div>
+                <div class="token-item-hero">${itemSummary}</div>
+                <div class="token-amount-hero">₹${amount}</div>
+                <div class="token-modal-actions" style="flex-direction: column; gap: 12px;">
+                    <button onclick="confirmMarkAsServed(${orderId})" class="btn-primary" style="width: 100%; background: var(--accent-green);">Mark as Served</button>
+                    <button onclick="document.getElementById('tokenModal').remove()" class="btn-secondary" style="width: 100%;">Close</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    function confirmMarkAsServed(orderId) {
+        const existing = document.getElementById('confirmModal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'confirmModal';
+        modal.className = 'modal-overlay';
+        modal.style.zIndex = '3000'; // above the token modal
+        modal.innerHTML = `
+            <div class="modal-card" style="animation: modalIn 0.2s ease-out; text-align: center; padding: 24px; max-width: 320px;">
+                <h3 style="margin-bottom: 12px; font-size: 1.2rem; font-weight: 700;">Confirm Action</h3>
+                <p style="color: var(--text-medium); font-size: 0.95rem; margin-bottom: 24px;">Are you sure you want to mark this order as served? This action cannot be undone.</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button onclick="document.getElementById('confirmModal').remove()" class="btn-secondary" style="flex: 1; padding: 10px;">Cancel</button>
+                    <button onclick="executeMarkAsServed(${orderId})" class="btn-primary" style="flex: 1; padding: 10px; background: var(--accent-green);">Yes, Serve</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    async function executeMarkAsServed(orderId) {
+        document.getElementById('confirmModal').remove();
+        try {
+            const res = await fetch('/api/online/orders/' + orderId + '/serve', {
+                method: 'PUT',
+                headers: { 'Authorization': 'Bearer ' + studentToken }
+            });
+            if (res.ok) {
+                const tokenModal = document.getElementById('tokenModal');
+                if (tokenModal) tokenModal.remove();
+                loadMyOrders();
+            } else {
+                alert('Failed to mark order as served.');
+            }
+        } catch (err) {
+            alert('Error connecting to the server.');
+        }
+    }
+
+    loadMyOrders();
+</script>
+</body>
+</html>

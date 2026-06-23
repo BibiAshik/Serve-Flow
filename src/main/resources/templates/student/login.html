@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bite — Student Login | ServeFlow</title>
+    <meta name="description" content="Campus Bite canteen pre-order portal. Login with your college Google account to order food online.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/Campus_Bite_Logo_Inside_Page.png}">
+</head>
+<body class="student-login-page">
+
+<div class="student-login-container">
+
+    <!-- HERO BRAND SECTION -->
+    <div class="student-brand-panel">
+        <div class="brand-bg-circles">
+            <div class="circle circle-1"></div>
+            <div class="circle circle-2"></div>
+            <div class="circle circle-3"></div>
+        </div>
+        <div class="brand-content">
+            <img th:src="@{/images/Campus_Bite_Logo_Login_Page_Transparent.png}" alt="Campus Bite Logo" style="max-width: 250px; height: auto; margin-bottom: 16px;"
+                 onerror="this.style.display='none'">
+            <p class="brand-tagline" style="margin-left: 15px;">Skip the queue. Order ahead. Eat fresh.</p>
+
+            <div class="brand-steps">
+                <div class="step-item">
+                    <span class="step-number">1</span>
+                    <span class="step-text">Browse the canteen menu</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">2</span>
+                    <span class="step-text">Pay securely via UPI / Card</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">3</span>
+                    <span class="step-text">Show your token at the counter</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN FORM SECTION -->
+    <div class="student-login-form-panel">
+        <div class="login-form-wrapper">
+            <h2>Sign In to Order</h2>
+            <p class="login-subtitle">Use your college Google account</p>
+
+            <!-- Error message from OAuth2 failure -->
+            <div th:if="${param.error}" class="alert alert-error">
+                <span th:if="${param.error[0] == 'invalid-domain'}">
+                    ❌ Access denied. Only <strong>@sairamtap.edu.in</strong> accounts are allowed.
+                </span>
+                <span th:if="${param.error[0] == 'no-email'}">
+                    ❌ Could not retrieve your email from Google. Please try again.
+                </span>
+                <span th:unless="${param.error[0] == 'invalid-domain' or param.error[0] == 'no-email'}">
+                    ❌ Login failed. Please try again.
+                </span>
+            </div>
+
+            <!-- Google Sign-In Button -->
+            <a href="/oauth2/authorization/google" class="btn-google-signin" id="googleSignInBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                     alt="Google logo" class="google-logo">
+                <span>Continue with Google</span>
+            </a>
+
+            <div class="login-divider">
+                <span>Only for Sairam TAP students</span>
+            </div>
+
+            <div class="domain-notice">
+                <span class="domain-icon">🏫</span>
+                <div>
+                    <strong>College accounts only</strong>
+                    <p>Use your <code>@sairamtap.edu.in</code> Google account to sign in.</p>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // If student already has a valid JWT, skip login and go to home
+    const studentToken = localStorage.getItem('studentToken');
+    if (studentToken) {
+        window.location.href = '/student/home';
+    }
+
+    // Handle token from redirect URL (set by OAuth2SuccessHandler)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    if (tokenFromUrl) {
+        localStorage.setItem('studentToken', tokenFromUrl);
+        const name = urlParams.get('name') || '';
+        localStorage.setItem('studentName', decodeURIComponent(name));
+        window.location.href = '/student/home';
+    }
+</script>
+</body>
+</html>

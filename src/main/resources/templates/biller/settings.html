@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBill — Settings | ServeFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/biller.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/favicon.png}">
+</head>
+<body class="settings-page">
+
+<nav class="top-nav">
+    <div class="nav-brand">
+        <span class="nav-title">QuickBill</span>
+        <span class="nav-sub">by ServeFlow</span>
+    </div>
+    <div class="nav-links">
+        <a href="/biller/billing" class="nav-link">🧾 Billing</a>
+        <a href="/biller/orders" class="nav-link">📦 Online Orders</a>
+        <a href="/biller/history" class="nav-link">📋 History</a>
+        <a href="/biller/settings" class="nav-link active">⚙️ Settings</a>
+    </div>
+    <div class="nav-user">
+        <span id="navUsername" class="nav-username"></span>
+        <button onclick="logoutBiller()" class="btn-logout">Logout</button>
+    </div>
+</nav>
+
+<div class="page-content settings-content">
+    <div class="page-header">
+        <h1>System Settings</h1>
+        <p class="page-subtitle">Configure lunch cutoff time and payment matching window</p>
+    </div>
+
+    <div id="settingsSaveMsg" class="alert alert-success" style="display:none;">
+        Settings saved successfully.
+    </div>
+
+    <div class="settings-grid">
+
+        <!-- ORDERING CUTOFF SETTINGS -->
+        <div class="settings-card">
+            <h3>📅 Lunch &amp; Ordering</h3>
+            <div class="form-group">
+                <label for="lunchStartTime">Lunch Start Time</label>
+                <input type="time" id="lunchStartTime" value="12:30">
+                <p class="field-hint">Online ordering closes 15 minutes before this time.</p>
+            </div>
+        </div>
+
+        <!-- MATCHING ENGINE SETTINGS -->
+        <div class="settings-card">
+            <h3>🔗 Payment Matching Engine</h3>
+            <div class="form-group">
+                <label for="matchingWindow">Matching Window (minutes)</label>
+                <input type="number" id="matchingWindow" min="1" max="60" value="10">
+                <p class="field-hint">
+                    How many minutes back to search for matching UPI payments when a new bill is created.
+                    A bill created at 12:00 will match payments received from 11:50 if window = 10.
+                </p>
+            </div>
+        </div>
+
+        <!-- READ-ONLY INFO -->
+        <div class="settings-card settings-card-info">
+            <h3>ℹ️ System Information</h3>
+            <div class="info-row">
+                <span class="info-label">College Email Domain</span>
+                <span id="emailDomainDisplay" class="info-value">@sairamtap.edu.in</span>
+            </div>
+            <p class="field-hint">
+                The allowed student email domain cannot be changed from the UI.
+                Update <code>app.college-email-domain</code> in application.properties and restart.
+            </p>
+        </div>
+
+        <!-- PRINTER SETTINGS -->
+        <div class="settings-card">
+            <h3>🖨️ Thermal Printer</h3>
+            <div class="form-group">
+                <label for="printerHost">Printer IP Address</label>
+                <input type="text" id="printerHost" placeholder="e.g. 192.168.1.100 or localhost">
+                <p class="field-hint">
+                    The local network IP address of the ESC/POS thermal printer.
+                </p>
+            </div>
+            <div class="info-row" style="margin-top: 14px; border-top: 1px solid var(--border-card); padding-top: 14px;">
+                <span class="info-label">Current Status</span>
+                <span id="printerStatusInfo" class="info-value">Checking...</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ADD FOOD ITEM SECTION (FULL WIDTH) -->
+    <div id="foodSaveMsg" class="alert alert-success" style="display:none; margin-top: 24px;">
+        Food item added successfully!
+    </div>
+
+    <div class="settings-card" style="margin-top: 24px;">
+        <h3>🍔 Add New Food Item</h3>
+        <p class="field-hint" style="margin-bottom: 16px;">Add a new item to the menu. It will appear on both the Campus Bite student app and the QuickBill counter dropdown.</p>
+        
+        <form id="addFoodForm" onsubmit="addFoodItem(event)" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="foodName">Item Name</label>
+                <input type="text" id="foodName" required placeholder="e.g. Masala Dosa">
+            </div>
+            
+            <div class="form-group">
+                <label for="foodCategory">Category</label>
+                <select id="foodCategory" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-card); background: var(--bg-input); color: var(--text-primary);">
+                    <option value="Veg" style="background: #1e1e2d; color: #ffffff;">Veg</option>
+                    <option value="Non-Veg" style="background: #1e1e2d; color: #ffffff;">Non-Veg</option>
+                    <option value="Beverages" style="background: #1e1e2d; color: #ffffff;">Beverages</option>
+                    <option value="Snacks" style="background: #1e1e2d; color: #ffffff;">Snacks</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="foodPrice">Price (₹)</label>
+                <input type="number" id="foodPrice" required min="1" step="0.5" placeholder="e.g. 45.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="foodQty">Initial Quantity</label>
+                <input type="number" id="foodQty" required min="0" value="50">
+            </div>
+
+            <div class="form-group">
+                <label for="foodImage">Item Image</label>
+                <input type="file" id="foodImage" accept="image/*" style="padding: 6px;">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; padding-top: 30px;">
+                <input type="checkbox" id="foodIsVeg" checked style="width: 20px; height: 20px;">
+                <label for="foodIsVeg" style="margin: 0;">Is Vegetarian?</label>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="foodDesc">Description (Optional)</label>
+                <textarea id="foodDesc" rows="2" placeholder="e.g. Crispy crepe served with chutney and sambar" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-card); background: var(--bg-input); color: var(--text-primary);"></textarea>
+            </div>
+
+            <div style="grid-column: 1 / -1;">
+                <button type="submit" class="btn-primary" id="addFoodBtn">➕ Add Food Item</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- MANAGE FOOD ITEMS SECTION -->
+    <div class="settings-card" style="margin-top: 24px;">
+        <h3>✏️ Manage Existing Food Items</h3>
+        <p class="field-hint" style="margin-bottom: 16px;">Select a food item to edit its details or delete it entirely.</p>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label for="editFoodSelect">Select Item to Manage</label>
+            <select id="editFoodSelect" onchange="populateEditForm()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-card); background: var(--bg-input); color: var(--text-primary);">
+                <option value="" style="background: #1e1e2d; color: #ffffff;">-- Select a food item --</option>
+            </select>
+        </div>
+
+        <form id="editFoodForm" onsubmit="updateFoodItem(event)" style="display: none; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid var(--border-card); padding-top: 20px;">
+            <input type="hidden" id="editFoodId">
+            
+            <div class="form-group">
+                <label for="editFoodName">Item Name</label>
+                <input type="text" id="editFoodName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="editFoodCategory">Category</label>
+                <select id="editFoodCategory" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-card); background: var(--bg-input); color: var(--text-primary);">
+                    <option value="Veg" style="background: #1e1e2d; color: #ffffff;">Veg</option>
+                    <option value="Non-Veg" style="background: #1e1e2d; color: #ffffff;">Non-Veg</option>
+                    <option value="Beverages" style="background: #1e1e2d; color: #ffffff;">Beverages</option>
+                    <option value="Snacks" style="background: #1e1e2d; color: #ffffff;">Snacks</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="editFoodPrice">Price (₹)</label>
+                <input type="number" id="editFoodPrice" required min="1" step="0.5">
+            </div>
+            
+            <div class="form-group">
+                <label for="editFoodQty">Current Quantity</label>
+                <input type="number" id="editFoodQty" required min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="editFoodImage">Update Image (Optional)</label>
+                <input type="file" id="editFoodImage" accept="image/*" style="padding: 6px;">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; padding-top: 30px;">
+                <input type="checkbox" id="editFoodIsVeg" style="width: 20px; height: 20px;">
+                <label for="editFoodIsVeg" style="margin: 0;">Is Vegetarian?</label>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="editFoodDesc">Description</label>
+                <textarea id="editFoodDesc" rows="2" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-card); background: var(--bg-input); color: var(--text-primary);"></textarea>
+            </div>
+
+            <div style="grid-column: 1 / -1; display: flex; gap: 15px;">
+                <button type="submit" class="btn-primary" id="updateFoodBtn">💾 Update Details</button>
+                <button type="button" class="btn-secondary" style="background: var(--accent-red); color: white;" onclick="deleteFoodItem()">🗑️ Delete Item</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="settings-actions">
+        <button onclick="saveSettings()" class="btn-primary">💾 Save Settings</button>
+        <button onclick="loadSettings()" class="btn-secondary">↩️ Reset</button>
+    </div>
+</div>
+
+<!-- Custom Delete Confirmation Modal -->
+<div id="deleteConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #1c1c28; padding: 24px; border-radius: 12px; width: 400px; border: 1px solid var(--border-card); box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
+        <h3 style="margin-top: 0; color: var(--text-primary);">🗑️ Delete Food Item</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Are you sure you want to permanently delete this item? This action cannot be undone.</p>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-primary" style="background: var(--accent-red);" onclick="confirmDeleteFoodItem()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Error Modal -->
+<div id="errorModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #1c1c28; padding: 24px; border-radius: 12px; width: 400px; border: 1px solid var(--border-card); box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
+        <h3 style="margin-top: 0; color: var(--accent-red);">⚠️ Error</h3>
+        <p id="errorModalMessage" style="color: var(--text-secondary); margin-bottom: 24px;">An error occurred.</p>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn-primary" onclick="closeErrorModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showErrorModal(msg) {
+        document.getElementById('errorModalMessage').textContent = msg;
+        document.getElementById('errorModal').style.display = 'flex';
+    }
+
+    function closeErrorModal() {
+        document.getElementById('errorModal').style.display = 'none';
+    }
+    const billerToken = localStorage.getItem('billerToken');
+    if (!billerToken) window.location.href = '/biller/login';
+    document.getElementById('navUsername').textContent = localStorage.getItem('billerUsername') || 'Biller';
+
+    async function loadSettings() {
+        try {
+            const res = await fetch('/api/biller/settings', {
+                headers: { 'Authorization': 'Bearer ' + billerToken }
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('billerToken');
+                localStorage.removeItem('billerUsername');
+                window.location.href = '/biller/login';
+                return;
+            }
+
+            const settings = await res.json();
+            document.getElementById('lunchStartTime').value = settings.lunchStartTime || '12:30';
+            document.getElementById('matchingWindow').value = settings.matchingWindowMinutes || 10;
+            document.getElementById('emailDomainDisplay').textContent = settings.collegeEmailDomain || '@sairamtap.edu.in';
+            document.getElementById('printerHost').value = settings.printerHost || 'localhost';
+            
+            const pStatus = document.getElementById('printerStatusInfo');
+            pStatus.textContent = settings.printerStatus || 'Unknown';
+            if(settings.printerStatus === 'ONLINE') {
+                pStatus.style.color = 'var(--accent-green)';
+            } else {
+                pStatus.style.color = 'var(--accent-red)';
+            }
+        } catch (e) {
+            console.error('Error loading settings:', e);
+        }
+    }
+
+    async function saveSettings() {
+        const msg = document.getElementById('settingsSaveMsg');
+        try {
+            const res = await fetch('/api/biller/settings', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + billerToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    lunchStartTime: document.getElementById('lunchStartTime').value,
+                    matchingWindowMinutes: parseInt(document.getElementById('matchingWindow').value),
+                    printerHost: document.getElementById('printerHost').value
+                })
+            });
+            if (res.ok) {
+                msg.style.display = 'flex';
+                setTimeout(() => msg.style.display = 'none', 3000);
+                loadSettings();
+            }
+        } catch (e) {
+            showErrorModal('Error saving settings. Please try again.');
+        }
+    }
+
+    async function addFoodItem(event) {
+        event.preventDefault();
+        const btn = document.getElementById('addFoodBtn');
+        btn.textContent = 'Adding...';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('name', document.getElementById('foodName').value);
+        formData.append('category', document.getElementById('foodCategory').value);
+        formData.append('price', document.getElementById('foodPrice').value);
+        formData.append('quantityAvailable', document.getElementById('foodQty').value);
+        formData.append('isVeg', document.getElementById('foodIsVeg').checked);
+        formData.append('description', document.getElementById('foodDesc').value);
+
+        const imageFile = document.getElementById('foodImage').files[0];
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+
+        try {
+            const res = await fetch('/api/biller/food-items', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + billerToken
+                },
+                body: formData // Note: Do not set Content-Type header when sending FormData
+            });
+
+            if (res.ok) {
+                const msg = document.getElementById('foodSaveMsg');
+                msg.textContent = 'Food item added successfully!';
+                msg.style.display = 'flex';
+                setTimeout(() => msg.style.display = 'none', 3000);
+                document.getElementById('addFoodForm').reset();
+                loadAllFoodItems(); // Refresh the edit dropdown
+            } else {
+                showErrorModal('Failed to add food item: ' + await res.text());
+            }
+        } catch (e) {
+            showErrorModal('Error connecting to server.');
+        } finally {
+            btn.textContent = '➕ Add Food Item';
+            btn.disabled = false;
+        }
+    }
+
+    let allFoodItems = [];
+
+    async function loadAllFoodItems() {
+        try {
+            const res = await fetch('/api/biller/food-items', {
+                headers: { 'Authorization': 'Bearer ' + billerToken }
+            });
+            if (res.ok) {
+                allFoodItems = await res.json();
+                const select = document.getElementById('editFoodSelect');
+                select.innerHTML = '<option value="" style="background: #1e1e2d; color: #ffffff;">-- Select a food item --</option>';
+                allFoodItems.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = `${item.name} (₹${item.price})`;
+                    option.style.background = '#1e1e2d';
+                    option.style.color = '#ffffff';
+                    select.appendChild(option);
+                });
+            }
+        } catch (e) {
+            console.error('Error loading food items:', e);
+        }
+    }
+
+    function populateEditForm() {
+        const id = document.getElementById('editFoodSelect').value;
+        const form = document.getElementById('editFoodForm');
+        
+        if (!id) {
+            form.style.display = 'none';
+            return;
+        }
+
+        const item = allFoodItems.find(f => f.id == id);
+        if (item) {
+            document.getElementById('editFoodId').value = item.id;
+            document.getElementById('editFoodName').value = item.name;
+            document.getElementById('editFoodCategory').value = item.category;
+            document.getElementById('editFoodPrice').value = item.price;
+            document.getElementById('editFoodQty').value = item.quantityAvailable;
+            document.getElementById('editFoodIsVeg').checked = item.isVeg;
+            document.getElementById('editFoodDesc').value = item.description || '';
+            form.style.display = 'grid';
+        }
+    }
+
+    async function updateFoodItem(event) {
+        event.preventDefault();
+        const id = document.getElementById('editFoodId').value;
+        if (!id) return;
+
+        const formData = new FormData();
+        formData.append('name', document.getElementById('editFoodName').value);
+        formData.append('category', document.getElementById('editFoodCategory').value);
+        formData.append('price', document.getElementById('editFoodPrice').value);
+        formData.append('quantityAvailable', document.getElementById('editFoodQty').value);
+        formData.append('isVeg', document.getElementById('editFoodIsVeg').checked);
+        formData.append('description', document.getElementById('editFoodDesc').value);
+
+        const imageFile = document.getElementById('editFoodImage').files[0];
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+
+        try {
+            const res = await fetch('/api/biller/food-items/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + billerToken
+                },
+                body: formData
+            });
+
+            if (res.ok) {
+                const msg = document.getElementById('foodSaveMsg');
+                msg.textContent = 'Food item updated successfully!';
+                msg.style.display = 'flex';
+                setTimeout(() => msg.style.display = 'none', 3000);
+                loadAllFoodItems();
+                document.getElementById('editFoodForm').style.display = 'none';
+                document.getElementById('editFoodSelect').value = '';
+            } else {
+                showErrorModal('Failed to update: ' + await res.text());
+            }
+        } catch (e) {
+            showErrorModal('Error updating food item.');
+        }
+    }
+
+    // Modal control functions
+    function deleteFoodItem() {
+        const id = document.getElementById('editFoodId').value;
+        if (!id) return;
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
+
+    async function confirmDeleteFoodItem() {
+        const id = document.getElementById('editFoodId').value;
+        if (!id) return;
+
+        closeDeleteModal();
+
+        try {
+            const res = await fetch('/api/biller/food-items/' + id, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + billerToken }
+            });
+
+            if (res.ok) {
+                const msg = document.getElementById('foodSaveMsg');
+                msg.textContent = 'Food item deleted successfully!';
+                msg.style.display = 'flex';
+                setTimeout(() => msg.style.display = 'none', 3000);
+                loadAllFoodItems();
+                document.getElementById('editFoodForm').style.display = 'none';
+                document.getElementById('editFoodSelect').value = '';
+            } else {
+                showErrorModal('Failed to delete: ' + await res.text());
+            }
+        } catch (e) {
+            showErrorModal('Error deleting food item.');
+        }
+    }
+
+    function logoutBiller() {
+        localStorage.clear();
+        window.location.href = '/biller/login';
+    }
+
+    loadSettings();
+    loadAllFoodItems();
+</script>
+</body>
+</html>

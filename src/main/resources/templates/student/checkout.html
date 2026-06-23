@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bite — Cart | ServeFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/Campus_Bite_Logo_Inside_Page.png}">
+    <meta name="rzp-key" th:content="${razorpayKeyId}">
+</head>
+<body class="student-home-page" style="background: var(--bg-primary);">
+
+<!-- TOP NAVIGATION -->
+<nav class="student-nav">
+    <div class="student-nav-brand">
+        <a href="/student/home" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <img th:src="@{/images/Campus_Bite_Logo_Inside_Page.png}" alt="Campus Bite" class="nav-logo" style="width: auto; height: 36px; border-radius: 0;" onerror="this.style.display='none'">
+        </a>
+    </div>
+    <div class="student-nav-links">
+        <a href="/student/home" class="student-nav-link">Menu</a>
+        <a href="/student/my-orders" class="student-nav-link">My Orders</a>
+        <a href="/student/favorites" class="student-nav-link">Favorites</a>
+        <a href="/student/profile" class="student-nav-link">Profile</a>
+    </div>
+    <div class="student-nav-right">
+        <a href="/student/checkout" class="btn-cart active" style="text-decoration:none;">
+            🛒 Cart <span id="cartCount" class="cart-badge">0</span>
+        </a>
+    </div>
+</nav>
+
+<!-- BOTTOM NAVIGATION FOR MOBILE -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-links">
+        <a href="/student/home" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🍽️</span>
+            <span>Menu</span>
+        </a>
+        <a href="/student/my-orders" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🧾</span>
+            <span>Orders</span>
+        </a>
+        <a href="/student/favorites" class="bottom-nav-link">
+            <span class="bottom-nav-icon">❤️</span>
+            <span>Favorites</span>
+        </a>
+        <a href="/student/checkout" class="bottom-nav-link active">
+            <span class="bottom-nav-icon">🛒</span>
+            <span>Cart</span>
+        </a>
+        <a href="/student/profile" class="bottom-nav-link">
+            <span class="bottom-nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </div>
+</nav>
+
+<div style="max-width: 600px; margin: calc(var(--nav-h) + 40px) auto 80px; padding: 20px; background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
+    <h2 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 20px;">Your Cart</h2>
+    
+    <div id="cartItems" class="cart-items" style="max-height: none; padding: 0;">
+        <!-- Filled by JS -->
+    </div>
+
+    <div id="cartFooter" class="cart-footer" style="display:none; padding: 20px 0 0; margin-top: 20px; border-top: 2px dashed var(--border-light);">
+        <div class="cart-total" style="font-size: 1.2rem;">
+            <span>Total</span>
+            <span id="cartTotal" class="cart-total-amount">₹0.00</span>
+        </div>
+        <div style="margin-top: 16px;">
+            <label for="pickupTime" class="field-hint" style="display:block; margin-bottom:6px; color:var(--text-medium); font-weight:600;">Preferred pickup time (optional)</label>
+            <input type="time" id="pickupTime" class="pickup-time-input">
+        </div>
+        <button onclick="initiatePaymentFromPage()" class="btn-checkout" id="payBtn" style="margin-top: 24px; padding: 16px; font-size: 1.1rem;">
+            <span id="payBtnText">💳 Pay Now</span>
+            <span id="paySpinner" class="spinner" style="display:none;"></span>
+        </button>
+        <p class="payment-note" style="margin-top:12px;">Powered by Razorpay · Secure UPI / Card / Net Banking</p>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<!-- Razorpay JS SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script th:src="@{/js/student.js}"></script>
+<script>
+    async function initiatePaymentFromPage() {
+        // Just bypass the modal and call initiatePayment
+        await initiatePayment();
+    }
+</script>
+</body>
+</html>

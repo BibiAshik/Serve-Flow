@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bite — Menu | ServeFlow</title>
+    <meta name="description" content="Campus Bite canteen menu. Browse food items, add to cart, and pre-order your meal online.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/Campus_Bite_Logo_Inside_Page.png}">
+    <meta name="rzp-key" th:content="${razorpayKeyId}">
+</head>
+<body class="student-home-page">
+
+<!-- TOP NAVIGATION -->
+<nav class="student-nav">
+    <div class="student-nav-brand">
+        <a href="/student/home" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <img th:src="@{/images/Campus_Bite_Logo_Inside_Page.png}" alt="Campus Bite" class="nav-logo" style="width: auto; height: 36px; border-radius: 0;" onerror="this.style.display='none'">
+        </a>
+    </div>
+    <div class="student-nav-links">
+        <a href="/student/home" class="student-nav-link active">Menu</a>
+        <a href="/student/my-orders" class="student-nav-link">My Orders</a>
+        <a href="/student/favorites" class="student-nav-link">Favorites</a>
+        <a href="/student/profile" class="student-nav-link">Profile</a>
+    </div>
+    <div class="student-nav-right">
+        <span id="studentGreeting" class="greeting-text"></span>
+        <a href="/student/checkout" class="btn-cart" style="text-decoration:none;">
+            🛒 Cart <span id="cartCount" class="cart-badge">0</span>
+        </a>
+    </div>
+</nav>
+
+<!-- BOTTOM NAVIGATION FOR MOBILE -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-links">
+        <a href="/student/home" class="bottom-nav-link active">
+            <span class="bottom-nav-icon">🍽️</span>
+            <span>Menu</span>
+        </a>
+        <a href="/student/my-orders" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🧾</span>
+            <span>Orders</span>
+        </a>
+        <a href="/student/favorites" class="bottom-nav-link">
+            <span class="bottom-nav-icon">❤️</span>
+            <span>Favorites</span>
+        </a>
+        <a href="/student/checkout" class="bottom-nav-link">
+            <span class="bottom-nav-icon">🛒</span>
+            <span>Cart</span>
+        </a>
+        <a href="/student/profile" class="bottom-nav-link">
+            <span class="bottom-nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </div>
+</nav>
+
+<!-- CUTOFF WARNING BANNER -->
+<div id="cutoffBanner" class="cutoff-banner" style="display:none;">
+    ⏰ Online ordering is currently closed (cutoff before lunch). Visit the counter or check back tomorrow.
+</div>
+
+<!-- HERO SECTION -->
+<div class="menu-hero">
+    <div class="menu-hero-content">
+        <h1>Today's Menu</h1>
+        <p>Fresh food, pre-ordered by you. Skip the queue — just show your token.</p>
+    </div>
+    <!-- Category Filter -->
+    <div class="category-filters" id="categoryFilters">
+        <button class="cat-btn active" onclick="filterCategory('ALL', this)">🍽️ All</button>
+        <button class="cat-btn" onclick="filterCategory('Veg', this)">🥗 Veg</button>
+        <button class="cat-btn" onclick="filterCategory('Non-Veg', this)">🍗 Non-Veg</button>
+        <button class="cat-btn" onclick="filterCategory('Beverages', this)">☕ Beverages</button>
+        <button class="cat-btn" onclick="filterCategory('Snacks', this)">🥨 Snacks</button>
+    </div>
+</div>
+
+<!-- MENU GRID -->
+<div class="menu-section">
+    <div id="menuGrid" class="menu-grid">
+        <div class="loading-placeholder">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+        </div>
+    </div>
+</div>
+
+<!-- CART HAS BEEN MOVED TO A SEPARATE PAGE -->
+
+<!-- CHECKOUT MODAL (inline for single-page UX) -->
+<div id="checkoutModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Confirm Order</h3>
+            <button onclick="closeCheckoutModal()" class="modal-close">✕</button>
+        </div>
+        <div id="orderSummary" class="order-summary"></div>
+        <div class="modal-total">
+            Total: <strong id="modalTotal">₹0.00</strong>
+        </div>
+        <button id="payBtn" onclick="initiatePayment()" class="btn-pay">
+            <span id="payBtnText">💳 Pay Now</span>
+            <span id="paySpinner" class="spinner" style="display:none;"></span>
+        </button>
+        <p class="payment-note">Powered by Razorpay · Secure UPI / Card / Net Banking</p>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<!-- Razorpay JS SDK (loaded when needed) -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script th:src="@{/js/student.js}"></script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBill — Online Orders | ServeFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/biller.css}">
+</head>
+<body class="orders-page">
+
+<nav class="top-nav">
+    <div class="nav-brand">
+        <span class="nav-title">QuickBill</span>
+        <span class="nav-sub">by ServeFlow</span>
+    </div>
+    <div class="nav-links">
+        <a href="/biller/billing" class="nav-link">🧾 Billing</a>
+        <a href="/biller/orders" class="nav-link active">📦 Online Orders</a>
+        <a href="/biller/history" class="nav-link">📋 History</a>
+        <a href="/biller/settings" class="nav-link">⚙️ Settings</a>
+    </div>
+    <div class="nav-user">
+        <span id="navUsername" class="nav-username"></span>
+        <button onclick="logoutBiller()" class="btn-logout">Logout</button>
+    </div>
+</nav>
+
+<div class="page-content">
+    <div class="page-header">
+        <h1>Online Orders</h1>
+        <p class="page-subtitle">Campus Bite pre-orders from students. Auto-refreshes every 15 seconds.</p>
+    </div>
+
+    <!-- Status Filter Tabs -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="filterOrders('PAID', this)">Paid (To Prepare)</button>
+        <button class="tab-btn" onclick="filterOrders('SERVED', this)">Served</button>
+        <button class="btn-secondary" style="margin-left:auto" onclick="loadOrders()">🔄 Refresh</button>
+    </div>
+
+    <!-- Orders Grid -->
+    <div id="ordersGrid" class="orders-grid">
+        <div class="loading-card">Loading online orders...</div>
+    </div>
+</div>
+
+<script>
+    const billerToken = localStorage.getItem('billerToken');
+    if (!billerToken) window.location.href = '/biller/login';
+    document.getElementById('navUsername').textContent = localStorage.getItem('billerUsername') || 'Biller';
+
+    let currentFilter = 'PAID';
+
+    async function loadOrders() {
+        const grid = document.getElementById('ordersGrid');
+        try {
+            let url = '/api/biller/online-orders';
+            if (currentFilter !== 'ALL' && currentFilter !== 'SERVED') {
+                url += '?status=' + currentFilter;
+            }
+
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + billerToken }
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('billerToken');
+                localStorage.removeItem('billerUsername');
+                window.location.href = '/biller/login';
+                return;
+            }
+
+            let orders = await res.json();
+
+            if (currentFilter === 'SERVED') {
+                orders = orders.filter(o => o.status === 'SERVED');
+            } else if (currentFilter === 'PAID') {
+                orders = orders.filter(o => o.status !== 'SERVED');
+            }
+
+            if (!orders.length) {
+                grid.innerHTML = '<div class="empty-card">No orders found for this filter.</div>';
+                return;
+            }
+
+            grid.innerHTML = orders.map(o => `
+                <div class="order-card ${getCardClass(o)}">
+                    <div class="order-card-header">
+                        <span class="order-id">#${o.id}</span>
+                        <span class="order-badge badge-${getPaymentColor(o)}">${o.status === 'SERVED' ? 'SERVED' : (o.paymentStatus || 'UNKNOWN')}</span>
+                    </div>
+                    <div class="order-email">${o.studentEmail || 'Unknown student'}</div>
+                    <div class="order-items" style="color:#aaa; font-size:0.9rem; margin:6px 0;">${o.itemSummary || '—'}</div>
+                    ${o.pickupTime ? `<div style="color:var(--accent-orange); font-size:0.9rem; font-weight:bold; margin-bottom:6px;">⏰ Pickup Time: ${o.pickupTime}</div>` : ''}
+                    <div class="order-amount">₹${o.totalAmount?.toFixed(2) || '0.00'}</div>
+                    <div class="order-time">${o.placedAt ? new Date(o.placedAt).toLocaleString('en-IN') : '—'}</div>
+                    ${o.status === 'SERVED' ? '<div style="margin-top:10px; color:var(--accent-green); font-weight:bold; font-size: 0.9rem;">✓ Order Finished</div>' : ''}
+                </div>
+            `).join('');
+        } catch (err) {
+            grid.innerHTML = '<div class="error-card">Error loading orders. Check connection.</div>';
+        }
+    }
+
+    function filterOrders(status, btn) {
+        currentFilter = status;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadOrders();
+    }
+
+    async function markReady(orderId) {
+        try {
+            // This would call PUT /api/biller/orders/{id}/status but for now just refresh
+            alert('Order #' + orderId + ' marked as Ready for pickup.');
+            loadOrders();
+        } catch (e) {
+            alert('Error marking order ready.');
+        }
+    }
+
+    function getCardClass(o) {
+        if (o.status === 'SERVED') return 'card-paid';
+        if (o.paymentStatus === 'PAID') return 'card-paid';
+        if (o.paymentStatus === 'FAILED') return 'card-failed';
+        return 'card-pending';
+    }
+
+    function getPaymentColor(o) {
+        if (o.status === 'SERVED') return 'success';
+        if (o.paymentStatus === 'PAID') return 'success';
+        if (o.paymentStatus === 'FAILED') return 'danger';
+        return 'warning';
+    }
+
+    function logoutBiller() {
+        localStorage.clear();
+        window.location.href = '/biller/login';
+    }
+
+    loadOrders();
+    // Auto-refresh every 15 seconds
+    setInterval(loadOrders, 15000);
+</script>
+</body>
+</html>

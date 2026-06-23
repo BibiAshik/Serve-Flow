@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBill — Live Billing | ServeFlow</title>
+    <meta name="description"
+        content="QuickBill real-time billing dashboard with UPI payment matching and token generation.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/biller.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/favicon.png}">
+</head>
+
+<body class="billing-page">
+
+    <!-- TOP NAVIGATION BAR -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <img th:src="@{/images/campus-bite-logo.png}" alt="Logo" class="nav-logo"
+                onerror="this.style.display='none'">
+            <span class="nav-title">QuickBill</span>
+            <span class="nav-sub">by ServeFlow</span>
+        </div>
+        <div class="nav-links">
+            <a href="/biller/billing" class="nav-link active">🧾 Billing</a>
+            <a href="/biller/orders" class="nav-link">📦 Online Orders</a>
+            <a href="/biller/history" class="nav-link">📋 History</a>
+            <a href="/biller/settings" class="nav-link">⚙️ Settings</a>
+        </div>
+        <div class="nav-user">
+            <span id="navUsername" class="nav-username"></span>
+            <button onclick="logoutBiller()" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <!-- MAIN 3-COLUMN LAYOUT -->
+    <div class="billing-layout">
+
+        <!-- ═══════════════════════════════════════════════════════════════
+         COLUMN 1 — CREATE BILL FORM
+         ═══════════════════════════════════════════════════════════════ -->
+        <div class="billing-col col-1">
+            <div class="col-header">
+                <h2>Create Bill</h2>
+                <span class="col-subtitle">Walk-in customer</span>
+            </div>
+
+            <form id="createBillForm" onsubmit="handleCreateBill(event)" autocomplete="off">
+
+                <!-- Item Selection Dropdown -->
+                <div class="form-group">
+                    <label for="foodItemSelect">Menu Item</label>
+                    <select id="foodItemSelect" onchange="handleItemSelect(this)">
+                        <option value="">— Select item or type below —</option>
+                        <!-- Options injected by billing.js from /api/food/dropdown -->
+                    </select>
+                </div>
+
+                <!-- Custom item name override -->
+                <div class="form-group">
+                    <label for="itemName">Item Name <span class="label-hint">(or type custom)</span></label>
+                    <input type="text" id="itemName" placeholder="e.g. Chicken Fried Rice" required>
+                </div>
+
+                <!-- Quantity -->
+                <div class="form-group form-row">
+                    <div>
+                        <label for="quantity">Qty</label>
+                        <input type="number" id="quantity" min="1" value="1" required onchange="recalcAmount()">
+                    </div>
+                    <div>
+                        <label for="unitRate">Unit Rate (₹)</label>
+                        <input type="number" id="unitRate" min="0.01" step="0.01" required placeholder="0.00"
+                            onchange="recalcAmount()">
+                    </div>
+                </div>
+
+                <!-- Calculated total -->
+                <div class="amount-display">
+                    <span class="amount-label">Total Amount</span>
+                    <span id="totalAmount" class="amount-value">₹ 0.00</span>
+                </div>
+
+                <!-- Payment Mode -->
+                <div class="form-group">
+                    <label>Payment Mode</label>
+                    <div class="payment-toggle">
+                        <button type="button" id="btnCash" class="payment-btn active" onclick="setPaymentMode('CASH')">
+                            💵 Cash
+                        </button>
+                        <button type="button" id="btnUpi" class="payment-btn" onclick="setPaymentMode('UPI')">
+                            📱 UPI
+                        </button>
+                    </div>
+                    <input type="hidden" id="paymentMode" value="CASH">
+                </div>
+
+                <button type="submit" id="createBillBtn" class="btn-primary btn-full">
+                    <span id="createBillBtnText">Create Bill &amp; Generate Token</span>
+                    <span id="createBillSpinner" class="spinner" style="display:none;"></span>
+                </button>
+            </form>
+
+            <!-- Success flash message -->
+            <div id="billSuccessMsg" class="alert alert-success" style="display:none;"></div>
+            <div id="billErrorMsg" class="alert alert-error" style="display:none;"></div>
+
+            <!-- Quick Items (most common items as one-tap buttons) -->
+            <div class="quick-items-section">
+                <p class="section-label">Quick Items</p>
+                <div id="quickItemsGrid" class="quick-items-grid">
+                    <!-- Injected by billing.js — top 6 food items as quick-select buttons -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+         COLUMN 2 — LIVE STATUS (WAITING + AMBIGUOUS)
+         ═══════════════════════════════════════════════════════════════ -->
+        <div class="billing-col col-2">
+
+            <!-- WAITING FOR PAYMENT ZONE -->
+            <div class="col-section">
+                <div class="col-header">
+                    <h2>Waiting for Payment</h2>
+                    <span id="pendingCount" class="badge badge-warning">0</span>
+                </div>
+                <div id="pendingBillsZone" class="bills-zone">
+                    <div class="empty-state">
+                        <span class="empty-icon">✅</span>
+                        <p>All bills matched</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AMBIGUOUS MATCH ZONE (shown only when there are ambiguous bills) -->
+            <div class="col-section" id="ambiguousSection" style="display:none;">
+                <div class="col-header ambiguous-header">
+                    <h2>⚠ Multiple Match Found</h2>
+                    <span id="ambiguousCount" class="badge badge-danger">0</span>
+                </div>
+                <p class="ambiguous-instruction">
+                    Ask customer for their UPI reference last 4 digits and click the matching payment:
+                </p>
+                <div id="ambiguousBillsZone" class="bills-zone">
+                    <!-- Injected by billing.js -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+         COLUMN 3 — PAYMENTS RECEIVED + RECENT TOKENS
+         ═══════════════════════════════════════════════════════════════ -->
+        <div class="billing-col col-3">
+
+            <!-- PAYMENTS RECEIVED ZONE -->
+            <div class="col-section">
+                <div class="col-header">
+                    <h2>Payments Received</h2>
+                    <span id="unmatchedCount" class="badge badge-info">0</span>
+                </div>
+                <div id="paymentsZone" class="payments-zone">
+                    <div class="empty-state">
+                        <span class="empty-icon">💳</span>
+                        <p>Waiting for UPI payments...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT TOKENS ZONE -->
+            <div class="col-section">
+                <div class="col-header">
+                    <h2>Recent Tokens</h2>
+                </div>
+                <div id="recentTokensZone" class="tokens-zone">
+                    <div class="empty-state">
+                        <span class="empty-icon">🎫</span>
+                        <p>No tokens yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM STATUS BAR -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-label">Bills Today</span>
+            <span id="totalBillsToday" class="status-value">0</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Payments</span>
+            <span id="totalPaymentsToday" class="status-value">0</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Matched</span>
+            <span id="matchedCount" class="status-value">0</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Unmatched</span>
+            <span id="unmatchedPaymentsCount" class="status-value">0</span>
+        </div>
+        <div class="status-item printer-status-item">
+            <span class="status-label">Printer</span>
+            <span id="printerStatusDot" class="printer-dot dot-offline"></span>
+            <span id="printerStatusText" class="status-value">Checking...</span>
+        </div>
+        <div class="status-item">
+            <span id="liveClockDisplay" class="status-value live-clock"></span>
+        </div>
+    </div>
+
+    <script th:src="@{/js/billing.js}"></script>
+</body>
+
+</html>
