@@ -243,22 +243,22 @@ public class BillingService {
 
     /**
      * Purpose: Runs every 1 minute to check for bills that have been sitting in
-     * WAITING_PAYMENT or AMBIGUOUS status for more than 15 minutes.
+     * WAITING_PAYMENT or AMBIGUOUS status for more than the matching window (10 minutes).
      * It marks them as CANCELLED so they disappear from the billing screen and
      * stop cluttering the UI or matching engine.
      */
     @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000)
     @org.springframework.transaction.annotation.Transactional
     public void cancelExpiredBills() {
-        // Bills older than 15 minutes
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(15);
+        // Bills older than the matching window
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(matchingWindowMinutes);
         List<BillStatus> statuses = List.of(BillStatus.WAITING_PAYMENT, BillStatus.AMBIGUOUS);
 
         List<Bill> expiredBills = billRepository.findByStatusInAndCreatedAtBefore(statuses, cutoff);
 
         if (!expiredBills.isEmpty()) {
-            log.info("cancelExpiredBills: Found {} abandoned bills older than 15 minutes. Cancelling them.",
-                    expiredBills.size());
+            log.info("cancelExpiredBills: Found {} abandoned bills older than {} minutes. Cancelling them.",
+                    expiredBills.size(), matchingWindowMinutes);
             for (Bill bill : expiredBills) {
                 bill.setStatus(BillStatus.CANCELLED);
             }
