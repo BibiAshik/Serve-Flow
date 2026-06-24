@@ -174,6 +174,10 @@ public class OnlineOrderService {
             orderRequest.put("currency", "INR");
             orderRequest.put("receipt", "txn_" + System.currentTimeMillis());
 
+            JSONObject notes = new JSONObject();
+            notes.put("source", "CampusBite");
+            orderRequest.put("notes", notes);
+
             com.razorpay.Order razorpayOrder = razorpay.orders.create(orderRequest);
             razorpayOrderId = razorpayOrder.get("id");
             order.setRazorpayOrderId(razorpayOrderId);

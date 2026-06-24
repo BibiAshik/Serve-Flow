@@ -105,9 +105,10 @@ public class WebhookController {
             String upiReferenceId = paymentEntity.path("id").asText();
 
             // Check if this payment belongs to a Campus Bite online order
-            String razorpayOrderId = paymentEntity.path("order_id").asText(null);
-            if (razorpayOrderId != null && !razorpayOrderId.trim().isEmpty() && !"null".equalsIgnoreCase(razorpayOrderId.trim())) {
-                log.info("receiveRazorpayWebhook: Ignoring payment {} because it belongs to Razorpay Order {} (Campus Bite online order).", upiReferenceId, razorpayOrderId);
+            JsonNode notesNode = paymentEntity.path("notes");
+            String source = notesNode.path("source").asText(null);
+            if ("CampusBite".equals(source)) {
+                log.info("receiveRazorpayWebhook: Ignoring payment {} because notes.source is CampusBite.", upiReferenceId);
                 return ResponseEntity.ok("acknowledged - online order");
             }
 
