@@ -1,52 +1,112 @@
-# ServeFlow
+<div align="center">
+  <img src="src/main/resources/static/images/Quick_Bill_Logo.png" alt="ServeFlow Logo" width="200" />
+  <h1>Serve Flow</h1>
+  <p><strong>A Next-Generation Automated Canteen Billing & Token Management Platform</strong></p>
+</div>
 
-Automated Canteen Billing & Token Platform. 
-ServeFlow consists of two main interfaces:
-1. **QuickBill** (Biller Portal): A real-time, responsive billing dashboard for canteen staff to create bills, generate tokens, and match UPI payments automatically.
-2. **Campus Bite** (Student Portal): A mobile-first web app for students to browse the menu, add items to their cart, pay online using Razorpay, and track their tokens live.
+<br />
 
-## Features
-- **Real-Time Payment Matching**: Matches Razorpay webhook events to walk-in bills automatically based on amounts and time windows.
-- **Ambiguous Match Resolution**: Handles cases where multiple identical payments arrive simultaneously by prompting the biller to resolve using the last 4 digits of the UPI reference.
-- **Thermal Printer Integration**: Connects directly to ESC/POS network thermal printers to print tokens on the fly.
-- **Google OAuth2**: Students login exclusively using their `@sairamtap.edu.in` Google accounts.
-- **JWT Authentication**: Biller portal uses secure JWT-based authentication.
-- **Live Polling & UI Updates**: The frontend fetches live status updates automatically for a seamless experience.
+ServeFlow is a comprehensive, dual-portal web application designed to eliminate canteen queues, automate UPI payment matching, and seamlessly bridge the gap between walk-in customers and online pre-orders.
 
-## Tech Stack
-- **Backend**: Spring Boot 3, Spring Data JPA, Spring Security (OAuth2 & JWT), Hibernate, MySQL
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript (No heavy frameworks)
-- **Payment Gateway**: Razorpay
-- **Build Tool**: Maven
+---
 
-## Setup & Running Locally
+## 📸 Screenshots
 
-1. **Database Configuration**
-   - Create a MySQL database named `serveflow_db`.
-   - Update `src/main/resources/application.properties` with your MySQL `root` password:
-     ```properties
-     spring.datasource.username=root
-     spring.datasource.password=YOUR_PASSWORD
-     ```
+*(Add screenshots of your application here!)*
 
-2. **Configure API Keys**
-   - Update `application.properties` with your Google OAuth2 Client ID and Secret.
-   - Update your Razorpay Test Key ID, Secret, and Webhook Secret.
-   - Generate a strong random string for `jwt.secret` (at least 32 characters).
+<br />
 
-3. **Running the Application**
-   ```sh
-   ./mvnw spring-boot:run
-   ```
-   Or using Docker Compose:
-   ```sh
-   docker-compose up --build
-   ```
+> **QuickBill Dashboard** 
+> 
+> `![QuickBill Dashboard](screenshot-link-here)`
 
-## Development
-- Dev mode is enabled by default in `application.properties` (`app.dev-mode=true`). This exposes a testing endpoint (`/api/dev/simulate-payment`) to simulate Razorpay webhooks during local testing without needing a public ngrok URL.
-- Ensure to set `app.dev-mode=false` in production.
+<br />
 
-## Accessing Portals
+> **Campus Bite Mobile App**
+> 
+> `![Campus Bite App](screenshot-link-here)`
+
+---
+
+## 🚀 Key Features
+
+### 🏢 QuickBill (Biller Portal)
+- **Live UPI Matching Engine**: Instantly and automatically matches walk-in Razorpay static QR payments to generated bills using dynamic time windows.
+- **Ambiguous Match Resolution**: Intelligently detects identical payments arriving simultaneously and prompts the biller to resolve them via the last 4 digits of the UPI reference.
+- **ESC/POS Thermal Printing**: Connects directly to local network thermal receipt printers via TCP sockets for instant, hardware-level token printing.
+- **Virtual Print Fallback**: Automatically provides an on-screen, perfectly isolated printable browser token if the physical printer goes offline.
+- **Live Dashboard**: Auto-polling UI that updates the status bar, recent tokens, and pending payments instantly without refreshing.
+
+### 🎓 Campus Bite (Student Portal)
+- **Mobile-First Experience**: A beautifully crafted, responsive UI specifically designed for students on the go.
+- **Google OAuth2 Security**: Strict authentication allowing only students with `@sairamtap.edu.in` accounts to log in.
+- **Online Pre-Ordering**: Students can browse the menu, add to cart, and checkout online.
+- **Razorpay Integration**: Flawless online payment capture and signature verification to guarantee secure transactions.
+- **Token Tracking**: Live "My Orders" dashboard tracking order status from PAID to SERVED.
+
+---
+
+## 💻 Tech Stack
+
+**Backend**
+- **Java 17 & Spring Boot 3**: High-performance backend REST APIs.
+- **Spring Security**: JWT-based stateless authentication and Google OAuth2 integration.
+- **Spring Data JPA & Hibernate**: Robust ORM layer connecting to MySQL.
+- **Razorpay SDK**: Webhook signature verification and order creation.
+- **Escpos-Coffee**: Hardware-level thermal printer integration.
+
+**Frontend**
+- **HTML5 & CSS3**: Pure, lightweight, dependency-free vanilla frontend.
+- **Vanilla JavaScript**: ES6+ modules fetching live data and handling UI states.
+
+---
+
+## 🛠️ Setup & Installation
+
+### 1. Database Setup
+Ensure you have MySQL running locally. Create a new database:
+```sql
+CREATE DATABASE serveflow_db;
+```
+
+### 2. Environment Variables
+Configure your `src/main/resources/application-local.properties` file with the following keys:
+```properties
+# Database
+spring.datasource.username=root
+spring.datasource.password=your_mysql_password
+
+# JWT Security
+jwt.secret=generate_a_very_long_secure_random_string_here
+
+# Google OAuth2
+spring.security.oauth2.client.registration.google.client-id=your_client_id
+spring.security.oauth2.client.registration.google.client-secret=your_client_secret
+
+# Razorpay
+razorpay.key.id=your_razorpay_key
+razorpay.key.secret=your_razorpay_secret
+razorpay.webhook.secret=your_webhook_secret
+
+# Thermal Printer
+app.printer.host=localhost
+app.printer.port=9100
+```
+
+### 3. Run the Application
+You can run the application directly using Maven:
+```bash
+./mvnw spring-boot:run
+```
+
+The application will start on `http://localhost:8080`.
+
+---
+
+## 🌐 Accessing the Portals
+
+- **Biller Login**: `http://localhost:8080/biller/login`
 - **Student Portal**: `http://localhost:8080/student/home`
-- **Biller Portal**: `http://localhost:8080/biller/login`
+
+---
+*Developed with ❤️ to modernize campus dining.*
