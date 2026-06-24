@@ -104,6 +104,13 @@ public class WebhookController {
             // Razorpay payment ID — used as the unique UPI reference ID for idempotency.
             String upiReferenceId = paymentEntity.path("id").asText();
 
+            // Check if this payment belongs to a Campus Bite online order
+            String razorpayOrderId = paymentEntity.path("order_id").asText(null);
+            if (razorpayOrderId != null && !razorpayOrderId.trim().isEmpty() && !"null".equalsIgnoreCase(razorpayOrderId.trim())) {
+                log.info("receiveRazorpayWebhook: Ignoring payment {} because it belongs to Razorpay Order {} (Campus Bite online order).", upiReferenceId, razorpayOrderId);
+                return ResponseEntity.ok("acknowledged - online order");
+            }
+
             // Timestamp when Razorpay captured the payment.
             long createdAtUnix = paymentEntity.path("created_at").asLong(0);
             LocalDateTime receivedAt = createdAtUnix > 0
