@@ -213,11 +213,30 @@ public class BillingService {
 
         // ── RECENT PAYMENTS
         // ───────────────────────────────────────────────────────────
-        List<Payment> allPayments = paymentRepository.findAllByOrderByReceivedAtDesc();
+        // 1. Fetch ALL unmatched payments from the last 12 hours (so they never disappear early)
+        LocalDateTime twelveHoursAgo = LocalDateTime.now().minusHours(12);
+        List<Payment> unmatchedPayments = paymentRepository.findByStatusAndReceivedAtAfterOrderByReceivedAtDesc(
+                UpiPaymentStatus.UNMATCHED, twelveHoursAgo);
+
+        // 2. Fetch the top 10 most recent MATCHED payments (for history visibility)
+        List<Payment> matchedPayments = paymentRepository.findTop10ByStatusOrderByReceivedAtDesc(UpiPaymentStatus.MATCHED);
+
+        // 3. Combine them into one list
+        List<Payment> combinedPayments = new ArrayList<>();
+        combinedPayments.addAll(unmatchedPayments);
+        combinedPayments.addAll(matchedPayments);
+
+        // 4. Sort the combined list by receivedAt DESC (newest first)
+        combinedPayments.sort((p1, p2) -> p2.getReceivedAt().compareTo(p1.getReceivedAt()));
+
+        // 5. If the combined list is huge, we can optionally cap it.
+        // But since unmatched is strictly bounded by 12 hours and matched is capped at 10,
+        // it shouldn't be too large. We'll cap the total displayed at 30 to avoid UI lag.
+        int paymentLimit = Math.min(30, combinedPayments.size());
+
         List<PaymentResponseDTO> recentPaymentDTOs = new ArrayList<>();
-        int paymentCount = Math.min(10, allPayments.size()); // show last 10
-        for (int i = 0; i < paymentCount; i++) {
-            recentPaymentDTOs.add(paymentMapper.toDTO(allPayments.get(i)));
+        for (int i = 0; i < paymentLimit; i++) {
+            recentPaymentDTOs.add(paymentMapper.toDTO(combinedPayments.get(i)));
         }
         liveStatus.setRecentPayments(recentPaymentDTOs);
 

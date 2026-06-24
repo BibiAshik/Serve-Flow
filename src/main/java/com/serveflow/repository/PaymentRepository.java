@@ -63,6 +63,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Ordered newest first so the biller sees the most recent activity.
     List<Payment> findAllByOrderByReceivedAtDesc();
 
+    // Finds all unmatched payments received after a certain time
+    List<Payment> findByStatusAndReceivedAtAfterOrderByReceivedAtDesc(UpiPaymentStatus status, LocalDateTime receivedAt);
+
+    // Finds recent matched payments
+    List<Payment> findTop10ByStatusOrderByReceivedAtDesc(UpiPaymentStatus status);
+
     // Counts unmatched payments received today — for the bottom status bar.
     @Query("SELECT COUNT(p) FROM Payment p WHERE p.status = :status AND p.receivedAt >= :startOfDay")
     long countByStatusAndReceivedAtAfter(
