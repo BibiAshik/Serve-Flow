@@ -66,8 +66,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Finds all unmatched payments received after a certain time
     List<Payment> findByStatusAndReceivedAtAfterOrderByReceivedAtDesc(UpiPaymentStatus status, LocalDateTime receivedAt);
 
-    // Finds recent matched payments
-    List<Payment> findTop10ByStatusOrderByReceivedAtDesc(UpiPaymentStatus status);
+    // Finds recent matched payments within a certain time
+    List<Payment> findTop10ByStatusAndReceivedAtAfterOrderByReceivedAtDesc(UpiPaymentStatus status, LocalDateTime receivedAt);
 
     // Counts unmatched payments received today — for the bottom status bar.
     @Query("SELECT COUNT(p) FROM Payment p WHERE p.status = :status AND p.receivedAt >= :startOfDay")

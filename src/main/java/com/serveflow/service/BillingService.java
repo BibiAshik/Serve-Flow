@@ -218,8 +218,9 @@ public class BillingService {
         List<Payment> unmatchedPayments = paymentRepository.findByStatusAndReceivedAtAfterOrderByReceivedAtDesc(
                 UpiPaymentStatus.UNMATCHED, twelveHoursAgo);
 
-        // 2. Fetch the top 10 most recent MATCHED payments (for history visibility)
-        List<Payment> matchedPayments = paymentRepository.findTop10ByStatusOrderByReceivedAtDesc(UpiPaymentStatus.MATCHED);
+        // 2. Fetch the top 10 most recent MATCHED payments (for history visibility, also within 12 hours)
+        List<Payment> matchedPayments = paymentRepository.findTop10ByStatusAndReceivedAtAfterOrderByReceivedAtDesc(
+                UpiPaymentStatus.MATCHED, twelveHoursAgo);
 
         // 3. Combine them into one list
         List<Payment> combinedPayments = new ArrayList<>();
