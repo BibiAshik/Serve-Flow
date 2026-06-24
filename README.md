@@ -12,28 +12,33 @@ ServeFlow is a comprehensive, dual-portal web application designed to eliminate 
 
 ## 📸 Screenshots
 
+<img width="700" alt="Overview 1" src="https://github.com/user-attachments/assets/d5a5c98d-446f-454d-996d-263e24a4cbd8" />
 
+<br /><br />
 
-<img width="800" height="500" alt="image" src="https://github.com/user-attachments/assets/d5a5c98d-446f-454d-996d-263e24a4cbd8" />
+<img width="700" alt="Overview 2" src="https://github.com/user-attachments/assets/f7d8129b-38b9-4643-b8ae-ccebdb5dde11" />
 
-<img width="800" height="500" alt="Screenshot 2026-06-25 000610" src="https://github.com/user-attachments/assets/f7d8129b-38b9-4643-b8ae-ccebdb5dde11" />
+<br /><br />
 
-<br />
+### 🏢 QuickBill Dashboard 
 
-> **QuickBill Dashboard** 
-> 
+<img width="700" alt="QuickBill 1" src="https://github.com/user-attachments/assets/01ba43ec-f893-4cb8-b0c0-1506cc948b02" />
 
-> <img width="800" height="500" alt="Screenshot 2026-06-25 000421" src="https://github.com/user-attachments/assets/01ba43ec-f893-4cb8-b0c0-1506cc948b02" />
-<img width="800" height="500" alt="Screenshot 2026-06-25 000555" src="https://github.com/user-attachments/assets/5cd08492-fd3a-4f6b-a761-812cb2b0654a" />
+<br /><br />
 
-<br />
+<img width="700" alt="QuickBill 2" src="https://github.com/user-attachments/assets/5cd08492-fd3a-4f6b-a761-812cb2b0654a" />
 
-> **Campus Bite Mobile App**
-> 
-> <img width="800" height="500" alt="Screenshot 2026-06-25 000339" src="https://github.com/user-attachments/assets/770cb1fc-5c17-4fb0-ad99-84f74adaaa71" />
-<img width="350" height="700" alt="image" src="https://github.com/user-attachments/assets/b98b1c37-e310-45b4-b7c4-aa863549e4d4" />
-<img width="350" height="700" alt="image" src="https://github.com/user-attachments/assets/1b4d4431-1f43-4721-b011-4527699962d4" />
+<br /><br />
 
+### 🎓 Campus Bite Mobile App
+
+<img width="700" alt="Campus Bite 1" src="https://github.com/user-attachments/assets/770cb1fc-5c17-4fb0-ad99-84f74adaaa71" />
+
+<br /><br />
+
+<img width="280" alt="Campus Bite 2" src="https://github.com/user-attachments/assets/b98b1c37-e310-45b4-b7c4-aa863549e4d4" />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<img width="280" alt="Campus Bite 3" src="https://github.com/user-attachments/assets/1b4d4431-1f43-4721-b011-4527699962d4" />
 
 ---
 
