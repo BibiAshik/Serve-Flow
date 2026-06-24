@@ -469,14 +469,55 @@ function printVirtualToken(btn) {
     const slip = btn.closest('.virtual-token-slip');
     if (!slip) return;
     
-    // Add print-target class to isolate it in CSS
-    slip.classList.add('print-target');
+    // Create a hidden iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
     
-    // Trigger browser print dialog
-    window.print();
+    // Copy all stylesheets from the main page
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                       .map(s => s.outerHTML).join('');
+                       
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+        <html>
+        <head>
+            <title>Print Token</title>
+            ${styles}
+            <style>
+                /* Override dark mode for paper printing */
+                body { 
+                    background: white !important; 
+                    color: black !important;
+                    margin: 0; padding: 20px; 
+                }
+                .virtual-token-slip { 
+                    box-shadow: none !important; 
+                    border: 1px solid #ccc !important;
+                    background: white !important;
+                    color: black !important;
+                    max-width: 400px;
+                }
+                .btn-print { display: none !important; }
+            </style>
+        </head>
+        <body>
+            ${slip.outerHTML}
+        </body>
+        </html>
+    `);
+    doc.close();
     
-    // Remove class after printing
-    slip.classList.remove('print-target');
+    // Wait for styles to load, then print and remove iframe
+    setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 1000);
+    }, 250);
 }
 
 // ── UTILITIES ─────────────────────────────────────────────────────────────────
