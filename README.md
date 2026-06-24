@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="src/main/resources/static/images/Quick_Bill_Logo.png" alt="ServeFlow Logo" width="200" />
+  <img src="src/main/resources/static/images/Serve_Flow_Logo.png" alt="ServeFlow Logo" width="200" />
   <h1>Serve Flow</h1>
   <p><strong>A Next-Generation Automated Canteen Billing & Token Management Platform</strong></p>
 </div>
