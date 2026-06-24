@@ -304,7 +304,7 @@ public class BillingService {
                 "<div class='token-item'>" + token.getItemSummary() + "</div>" +
                 "<div class='token-amount'>₹" + token.getAmount() + "</div>" +
                 "<div class='token-time'>" + formattedTime + "</div>" +
-                "<button onclick='window.print()' class='btn-print'>🖨 Print</button>" +
+                "<button onclick='printVirtualToken(this)' class='btn-print'>🖨 Print</button>" +
                 "</div>";
     }
 }

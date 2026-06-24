@@ -465,6 +465,20 @@ async function reprintToken(tokenId) {
     }
 }
 
+function printVirtualToken(btn) {
+    const slip = btn.closest('.virtual-token-slip');
+    if (!slip) return;
+    
+    // Add print-target class to isolate it in CSS
+    slip.classList.add('print-target');
+    
+    // Trigger browser print dialog
+    window.print();
+    
+    // Remove class after printing
+    slip.classList.remove('print-target');
+}
+
 // ── UTILITIES ─────────────────────────────────────────────────────────────────
 
 function startLiveClock() {

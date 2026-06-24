@@ -484,3 +484,34 @@ code { background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; fo
     .login-container { flex-direction: column; }
     .login-brand-panel { width: 100%; padding: 40px 20px; }
 }
+
+/* ── PRINTING ──────────────────────────────────────────────────────────────── */
+@media print {
+    /* Hide everything by default */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* Show only the token being printed */
+    .print-target, .print-target * {
+        visibility: visible;
+    }
+    
+    .print-target {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
+    
+    /* Hide the "Print" button inside the slip during printing */
+    .print-target .btn-print {
+        display: none !important;
+    }
+}
