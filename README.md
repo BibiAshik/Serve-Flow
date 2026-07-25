@@ -49,7 +49,7 @@ ServeFlow is a comprehensive, dual-portal web application designed to eliminate 
 - **Ambiguous Match Resolution**: Intelligently detects identical payments arriving simultaneously and prompts the biller to resolve them via the last 4 digits of the UPI reference.
 - **ESC/POS Thermal Printing**: Connects directly to local network thermal receipt printers via TCP sockets for instant, hardware-level token printing.
 - **Virtual Print Fallback**: Automatically provides an on-screen, perfectly isolated printable browser token if the physical printer goes offline.
-- **Live Dashboard**: Auto-polling UI that updates the status bar, recent tokens, and pending payments instantly without refreshing.
+- **Real-Time Live Dashboard**: Utilizes Server-Sent Events (SSE) and asynchronous Multithreading (Spring Event Publisher) to push instant, real-time UI updates for pending payments and recent tokens without manual refreshing.
 
 ### 🎓 Campus Bite (Student Portal)
 - **Mobile-First Experience**: A beautifully crafted, responsive UI specifically designed for students on the go.
