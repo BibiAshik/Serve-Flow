@@ -101,6 +101,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Purpose: Handles IllegalStateException — thrown when the system is in an invalid state
+     *          (e.g. Razorpay payment gateway initialization failed).
+     * Output:  HTTP 500 Internal Server Error.
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
+        log.error("Illegal state: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
+    /**
      * Purpose: Handles RuntimeException — a general catch-all for unexpected errors.
      *          Logs the full stack trace (for debugging) but returns only a generic
      *          message to the client (to avoid leaking implementation details).
