@@ -10,6 +10,24 @@ ServeFlow is a comprehensive, dual-portal web application designed to eliminate 
 
 ---
 
+## 🚀 Key Features
+
+### 🏢 QuickBill (Biller Portal)
+- **Live UPI Matching Engine**: Instantly and automatically matches walk-in Razorpay static QR payments to generated bills using dynamic time windows.
+- **Ambiguous Match Resolution**: Intelligently detects identical payments arriving simultaneously and prompts the biller to resolve them via the last 4 digits of the UPI reference.
+- **ESC/POS Thermal Printing**: Connects directly to local network thermal receipt printers via TCP sockets for instant, hardware-level token printing.
+- **Virtual Print Fallback**: Automatically provides an on-screen, perfectly isolated printable browser token if the physical printer goes offline.
+- **Real-Time Live Dashboard**: Utilizes Server-Sent Events (SSE) and asynchronous Multithreading (Spring Event Publisher) to push instant, real-time UI updates for pending payments and recent tokens without manual refreshing.
+
+### 🎓 Campus Bite (Student Portal)
+- **Mobile-First Experience**: A beautifully crafted, responsive UI specifically designed for students on the go.
+- **Google OAuth2 Security**: Strict authentication allowing only students with `@sairamtap.edu.in` accounts to log in.
+- **Online Pre-Ordering**: Students can browse the menu, add to cart, and checkout online.
+- **Razorpay Integration**: Flawless online payment capture and signature verification to guarantee secure transactions.
+- **Token Tracking**: Live "My Orders" dashboard tracking order status from PAID to SERVED.
+
+---
+
 ## 📸 Screenshots
 
 <img width="700" alt="Overview 1" src="https://github.com/user-attachments/assets/d5a5c98d-446f-454d-996d-263e24a4cbd8" />
@@ -39,24 +57,6 @@ ServeFlow is a comprehensive, dual-portal web application designed to eliminate 
 <img width="280" alt="Campus Bite 2" src="https://github.com/user-attachments/assets/b98b1c37-e310-45b4-b7c4-aa863549e4d4" />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <img width="280" alt="Campus Bite 3" src="https://github.com/user-attachments/assets/1b4d4431-1f43-4721-b011-4527699962d4" />
-
----
-
-## 🚀 Key Features
-
-### 🏢 QuickBill (Biller Portal)
-- **Live UPI Matching Engine**: Instantly and automatically matches walk-in Razorpay static QR payments to generated bills using dynamic time windows.
-- **Ambiguous Match Resolution**: Intelligently detects identical payments arriving simultaneously and prompts the biller to resolve them via the last 4 digits of the UPI reference.
-- **ESC/POS Thermal Printing**: Connects directly to local network thermal receipt printers via TCP sockets for instant, hardware-level token printing.
-- **Virtual Print Fallback**: Automatically provides an on-screen, perfectly isolated printable browser token if the physical printer goes offline.
-- **Real-Time Live Dashboard**: Utilizes Server-Sent Events (SSE) and asynchronous Multithreading (Spring Event Publisher) to push instant, real-time UI updates for pending payments and recent tokens without manual refreshing.
-
-### 🎓 Campus Bite (Student Portal)
-- **Mobile-First Experience**: A beautifully crafted, responsive UI specifically designed for students on the go.
-- **Google OAuth2 Security**: Strict authentication allowing only students with `@sairamtap.edu.in` accounts to log in.
-- **Online Pre-Ordering**: Students can browse the menu, add to cart, and checkout online.
-- **Razorpay Integration**: Flawless online payment capture and signature verification to guarantee secure transactions.
-- **Token Tracking**: Live "My Orders" dashboard tracking order status from PAID to SERVED.
 
 ---
 
