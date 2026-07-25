@@ -56,6 +56,7 @@ public class BillingService {
     private final BillMapper billMapper;
     private final PaymentMapper paymentMapper;
     private final TokenMapper tokenMapper;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Value("${app.matching-window-minutes:10}")
     private int matchingWindowMinutes;
@@ -73,7 +74,8 @@ public class BillingService {
             PrinterService printerService,
             BillMapper billMapper,
             PaymentMapper paymentMapper,
-            TokenMapper tokenMapper) {
+            TokenMapper tokenMapper,
+            org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.billRepository = billRepository;
         this.paymentRepository = paymentRepository;
         this.tokenRepository = tokenRepository;
@@ -84,6 +86,7 @@ public class BillingService {
         this.billMapper = billMapper;
         this.paymentMapper = paymentMapper;
         this.tokenMapper = tokenMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -126,6 +129,8 @@ public class BillingService {
 
             log.info("createBill: CASH bill {} confirmed. Token #{} generated.", savedBill.getId(),
                     token.getTokenNumber());
+            
+            eventPublisher.publishEvent(new com.serveflow.event.StateChangedEvent(this));
             return billMapper.toDTO(savedBill);
 
         } else {
@@ -152,9 +157,11 @@ public class BillingService {
                 LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(matchingWindowMinutes);
                 List<Payment> candidates = paymentRepository.findUnmatchedPaymentsByAmountWithinWindow(
                         reloadedBill.getAmount(), cutoffTime);
+                eventPublisher.publishEvent(new com.serveflow.event.StateChangedEvent(this));
                 return billMapper.toDTOWithCandidates(reloadedBill, candidates);
             }
 
+            eventPublisher.publishEvent(new com.serveflow.event.StateChangedEvent(this));
             return billMapper.toDTO(reloadedBill);
         }
     }
