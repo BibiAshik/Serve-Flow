@@ -67,16 +67,23 @@ public class JwtFilter extends OncePerRequestFilter {
         // Step 1: Read the Authorization header.
         // Expected format: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         String authHeader = request.getHeader("Authorization");
+        String jwtToken = null;
 
-        // Step 2: If missing or wrong format, skip JWT processing entirely.
+        // Step 2: Extract token from header or query parameter
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            // Remove "Bearer " prefix (exactly 7 characters) to get the raw token.
+            jwtToken = authHeader.substring(7);
+        } else if (request.getParameter("token") != null) {
+            // Fallback for EventSource (SSE) which cannot send custom headers.
+            jwtToken = request.getParameter("token");
+        }
+
+        // If no token was found, skip JWT processing entirely.
         // This is normal for public endpoints (login page, static files, webhook, etc.)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (jwtToken == null) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        // Step 3: Remove "Bearer " prefix (exactly 7 characters) to get the raw token.
-        String jwtToken = authHeader.substring(7);
 
         try {
             // Step 4: Parse and validate the JWT.
