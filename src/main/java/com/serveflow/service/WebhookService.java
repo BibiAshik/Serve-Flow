@@ -41,6 +41,7 @@ public class WebhookService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentMatchingService paymentMatchingService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     // Razorpay webhook secret — used for HMAC-SHA256 signature verification.
     // Read from application.properties. NEVER hardcoded in source code.
@@ -48,9 +49,11 @@ public class WebhookService {
     private String webhookSecret;
 
     public WebhookService(PaymentRepository paymentRepository,
-                          PaymentMatchingService paymentMatchingService) {
+                          PaymentMatchingService paymentMatchingService,
+                          org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.paymentRepository = paymentRepository;
         this.paymentMatchingService = paymentMatchingService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -150,6 +153,7 @@ public class WebhookService {
         // This handles the case where a bill was created BEFORE the payment arrived.
         paymentMatchingService.attemptMatch(savedPayment);
 
+        eventPublisher.publishEvent(new com.serveflow.event.StateChangedEvent(this));
         return savedPayment;
     }
 }
