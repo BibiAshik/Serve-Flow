@@ -361,6 +361,12 @@ async function initiatePayment() {
 
         const orderData = await orderRes.json();
 
+        if (orderRes.status === 401 || orderRes.status === 403) {
+            localStorage.removeItem('studentToken');
+            window.location.href = '/student/login';
+            return;
+        }
+
         if (!orderRes.ok) {
             if (orderRes.status === 400 && orderData.message?.includes('closed')) {
                 showErrorModal('⏰ Ordering Closed', orderData.message);
