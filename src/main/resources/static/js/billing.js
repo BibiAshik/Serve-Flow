@@ -45,9 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start the live clock in the status bar
     startLiveClock();
 
-    // Begin polling the live-status endpoint every 2500ms
-    pollLiveStatus();
-    pollIntervalId = setInterval(pollLiveStatus, 2500);
+    // Connect to Server-Sent Events (SSE) for real-time updates
+    connectToLiveStream();
 });
 
 // ── FOOD DROPDOWN ─────────────────────────────────────────────────────────────
@@ -224,43 +223,59 @@ async function handleCreateBill(event) {
     }
 }
 
-// ── LIVE STATUS POLLING ───────────────────────────────────────────────────────
+// ── REAL-TIME SSE STREAM ──────────────────────────────────────────────────────
 
 /**
- * Polls GET /api/biller/live-status and re-renders all zones.
- * Called every 2500ms by setInterval.
+ * Connects to /api/biller/stream using EventSource.
+ * Replaces the old 2500ms polling.
  */
-async function pollLiveStatus() {
-    try {
-        const res = await fetch('/api/biller/live-status', {
-            headers: { 'Authorization': 'Bearer ' + billerToken }
-        });
+function connectToLiveStream() {
+    // EventSource doesn't support headers, so we pass the token in the URL.
+    const eventSource = new EventSource('/api/biller/stream?token=' + encodeURIComponent(billerToken));
 
+    eventSource.addEventListener('live-status', (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            renderLiveStatus(data);
+        } catch (err) {
+            console.error("Failed to parse live-status SSE payload", err);
+        }
+    });
+
+    eventSource.onerror = (err) => {
+        console.error('SSE Connection Error. Reconnecting...', err);
+        // EventSource auto-reconnects natively.
+    };
+    
+    // Perform one initial fetch to render immediately while the SSE connects
+    fetch('/api/biller/live-status', {
+        headers: { 'Authorization': 'Bearer ' + billerToken }
+    })
+    .then(res => {
         if (res.status === 401 || res.status === 403) {
-            // Token expired or invalid — clear token and redirect to login
-            clearInterval(pollIntervalId);
             localStorage.removeItem('billerToken');
             localStorage.removeItem('billerUsername');
             window.location.href = '/biller/login';
-            return;
+            return null;
         }
+        return res.json();
+    })
+    .then(data => {
+        if (data) renderLiveStatus(data);
+    })
+    .catch(console.error);
+}
 
-        if (!res.ok) return; // transient error — retry next interval
-
-        const data = await res.json();
-
-        // Re-render each zone
-        renderPendingBills(data.pendingBills || []);
-        renderAmbiguousBills(data.ambiguousBills || []);
-        renderRecentTokens(data.recentTokens || []);
-        renderRecentPayments(data.recentPayments || []);
-        updateStatusBar(data);
-        updatePrinterIndicator(data.printerStatus);
-
-    } catch (err) {
-        // Network error during poll — fail silently, retry next interval
-        console.warn('Live status poll error:', err.message);
-    }
+/**
+ * Renders all zones using the LiveStatusDTO payload.
+ */
+function renderLiveStatus(data) {
+    renderPendingBills(data.pendingBills || []);
+    renderAmbiguousBills(data.ambiguousBills || []);
+    renderRecentTokens(data.recentTokens || []);
+    renderRecentPayments(data.recentPayments || []);
+    updateStatusBar(data);
+    updatePrinterIndicator(data.printerStatus);
 }
 
 // ── ZONE RENDERERS ────────────────────────────────────────────────────────────
