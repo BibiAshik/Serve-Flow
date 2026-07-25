@@ -54,6 +54,7 @@ public class PaymentMatchingService {
     private final PaymentRepository paymentRepository;
     private final MatchAttemptLogRepository matchAttemptLogRepository;
     private final TokenService tokenService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     // How many minutes back to search for matching bills/payments.
     // Configured in application.properties: app.matching-window-minutes
@@ -64,11 +65,13 @@ public class PaymentMatchingService {
     public PaymentMatchingService(BillRepository billRepository,
                                   PaymentRepository paymentRepository,
                                   MatchAttemptLogRepository matchAttemptLogRepository,
-                                  TokenService tokenService) {
+                                  TokenService tokenService,
+                                  org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.billRepository = billRepository;
         this.paymentRepository = paymentRepository;
         this.matchAttemptLogRepository = matchAttemptLogRepository;
         this.tokenService = tokenService;
+        this.eventPublisher = eventPublisher;
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -211,6 +214,8 @@ public class PaymentMatchingService {
             // The biller will see this bill in the AMBIGUOUS panel and call
             // resolveAmbiguousMatch() when they manually identify the correct payment.
         }
+        
+        eventPublisher.publishEvent(new com.serveflow.event.StateChangedEvent(this));
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -293,6 +298,7 @@ public class PaymentMatchingService {
         log.info("claimPaymentForBill: Bill {} matched to Payment {} [{}] → Token #{}",
                  bill.getId(), lockedPayment.getId(), resolutionType, generatedToken.getTokenNumber());
 
+        eventPublisher.publishEvent(new com.serveflow.event.StateChangedEvent(this));
         return generatedToken;
     }
 
@@ -312,8 +318,7 @@ public class PaymentMatchingService {
      */
     @Transactional
     public Token resolveAmbiguousMatch(Long billId, Long chosenPaymentId, String resolvedBy) {
-        log.info("resolveAmbiguousMatch: Biller '{}' resolving bill {} → payment {}", resolvedBy, billId, chosenPaymentId);
-
+        
         // Load the bill and verify it is still AMBIGUOUS.
         // If it was somehow already resolved (race condition from biller double-clicking),
         // we throw a clear error instead of processing it again.
