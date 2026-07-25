@@ -12,8 +12,10 @@ import com.serveflow.mapper.TokenMapper;
 import com.serveflow.service.BillingService;
 import com.serveflow.service.FoodService;
 import com.serveflow.service.PaymentMatchingService;
+import com.serveflow.service.SseService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -38,15 +40,18 @@ public class BillerController {
     private final FoodService foodService;
     private final PaymentMatchingService paymentMatchingService;
     private final TokenMapper tokenMapper;
+    private final SseService sseService;
 
     public BillerController(BillingService billingService,
                             FoodService foodService,
                             PaymentMatchingService paymentMatchingService,
-                            TokenMapper tokenMapper) {
+                            TokenMapper tokenMapper,
+                            SseService sseService) {
         this.billingService = billingService;
         this.foodService = foodService;
         this.paymentMatchingService = paymentMatchingService;
         this.tokenMapper = tokenMapper;
+        this.sseService = sseService;
     }
 
     /**
@@ -89,6 +94,15 @@ public class BillerController {
     public ResponseEntity<LiveStatusDTO> getLiveStatus() {
         LiveStatusDTO liveStatus = billingService.getLiveBillingStatus();
         return ResponseEntity.ok(liveStatus);
+    }
+
+    /**
+     * Purpose: Subscribes a client to the Server-Sent Events (SSE) stream.
+     *          The frontend uses this to receive real-time updates instead of polling.
+     */
+    @GetMapping("/stream")
+    public SseEmitter streamLiveStatus() {
+        return sseService.createEmitter();
     }
 
     /**
