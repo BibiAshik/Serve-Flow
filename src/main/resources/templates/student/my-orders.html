@@ -71,16 +71,25 @@
 </div>
 
 <script>
-    const studentToken = localStorage.getItem('studentToken');
+    const studentToken = sessionStorage.getItem('studentToken');
     if (!studentToken) window.location.href = '/student/login';
 
-    const studentName = localStorage.getItem('studentName') || '';
+    const studentName = sessionStorage.getItem('studentName') || '';
     document.getElementById('studentGreeting').textContent = studentName ? `Hi, ${studentName.split(' ')[0]}` : '';
 
-    function logoutStudent() {
-        localStorage.removeItem('studentToken');
-        localStorage.removeItem('studentName');
-        window.location.href = '/student/login';
+    async function logoutStudent() {
+        try {
+            if (studentToken) {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + studentToken }
+                });
+            }
+        } finally {
+            sessionStorage.removeItem('studentToken');
+            sessionStorage.removeItem('studentName');
+            window.location.href = '/student/login';
+        }
     }
 
     async function loadMyOrders() {
@@ -229,3 +238,4 @@
 </script>
 </body>
 </html>
+
