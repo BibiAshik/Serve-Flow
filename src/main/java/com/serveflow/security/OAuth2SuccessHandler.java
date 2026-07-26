@@ -1,6 +1,5 @@
 package com.serveflow.security;
 
-import com.serveflow.exception.InvalidDomainException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,16 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.List;
 
 import com.serveflow.entity.Student;
 import com.serveflow.repository.StudentRepository;
@@ -123,21 +118,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             return studentRepository.save(newStudent);
         });
 
-        // Step 6: Generate a JWT for this student.
-        // We create a minimal UserDetails object just for the JWT generation method.
-        // The role is ROLE_STUDENT — stored in the JWT so JwtFilter can read it later.
-        UserDetails studentDetails = new User(
-                email,  // username = email (used as the JWT subject)
-                "",     // no password — Google handled authentication
-                List.of(new SimpleGrantedAuthority("ROLE_STUDENT"))
-        );
-        String jwtToken = jwtUtil.generateToken(studentDetails);
+        String jwtToken = jwtUtil.generateTokenForStudent(email, "ROLE_STUDENT");
 
         // Step 7: Redirect the student to the Campus Bite home page.
         // We pass the JWT as a URL parameter so the JavaScript on home.html
-        // can store it in localStorage for future API calls.
+        // can store it in sessionStorage for future API calls.
         // Note: Passing JWT in URL is acceptable for this phase. For higher security,
         // consider using an HttpOnly cookie — documented as a future improvement.
         response.sendRedirect("/student/home?token=" + jwtToken + "&name=" + name);
     }
 }
+
