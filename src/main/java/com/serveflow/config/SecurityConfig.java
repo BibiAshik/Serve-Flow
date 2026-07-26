@@ -141,6 +141,10 @@ public class SecurityConfig {
                 // These are handled entirely by Spring Security's OAuth2 client.
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
 
+                // Biller auth endpoints
+                .requestMatchers("/api/auth/biller/login").permitAll()
+                .requestMatchers("/api/auth/logout").authenticated()
+
                 // Biller API — requires JWT with ROLE_BILLER
                 .requestMatchers("/api/biller/**").hasRole("BILLER")
 
