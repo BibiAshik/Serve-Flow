@@ -1,5 +1,7 @@
 package com.serveflow.security;
 
+import com.serveflow.service.JwtRevocationService;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -51,6 +53,12 @@ public class JwtFilter extends OncePerRequestFilter {
     @Value("${jwt.secret}")
     private String secret;
 
+    private final JwtRevocationService jwtRevocationService;
+
+    public JwtFilter(JwtRevocationService jwtRevocationService) {
+        this.jwtRevocationService = jwtRevocationService;
+    }
+
     /**
      * Purpose: Returns the signing key from the secret string.
      *          Same logic as in JwtUtil — must use the same key to verify signatures.
@@ -86,6 +94,12 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         try {
+            if (jwtRevocationService.isRevoked(jwtToken)) {
+                log.warn("JWT rejected for '{}': token has been revoked", request.getRequestURI());
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             // Step 4: Parse and validate the JWT.
             // parseClaimsJws() BOTH validates the signature and checks expiry.
             // If the token is tampered, expired, or malformed, it throws an exception here.
