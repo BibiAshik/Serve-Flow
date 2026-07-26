@@ -47,9 +47,9 @@
 </div>
 
 <script>
-    const billerToken = localStorage.getItem('billerToken');
+    const billerToken = sessionStorage.getItem('billerToken');
     if (!billerToken) window.location.href = '/biller/login';
-    document.getElementById('navUsername').textContent = localStorage.getItem('billerUsername') || 'Biller';
+    document.getElementById('navUsername').textContent = sessionStorage.getItem('billerUsername') || 'Biller';
 
     let currentFilter = 'PAID';
 
@@ -66,8 +66,8 @@
             });
 
             if (res.status === 401 || res.status === 403) {
-                localStorage.removeItem('billerToken');
-                localStorage.removeItem('billerUsername');
+                sessionStorage.removeItem('billerToken');
+                sessionStorage.removeItem('billerUsername');
                 window.location.href = '/biller/login';
                 return;
             }
@@ -135,9 +135,19 @@
         return 'warning';
     }
 
-    function logoutBiller() {
-        localStorage.clear();
-        window.location.href = '/biller/login';
+    async function logoutBiller() {
+        try {
+            if (billerToken) {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + billerToken }
+                });
+            }
+        } finally {
+            sessionStorage.removeItem('billerToken');
+            sessionStorage.removeItem('billerUsername');
+            window.location.href = '/biller/login';
+        }
     }
 
     loadOrders();
@@ -146,3 +156,4 @@
 </script>
 </body>
 </html>
+
