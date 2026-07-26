@@ -11,7 +11,7 @@
  *   6. Handle the manual resolution of AMBIGUOUS bills.
  *
  * TOKEN FROM APPLICATION.PROPERTIES:
- *   The billerToken is stored in localStorage after login (set by biller/login.html).
+ *   The billerToken is stored in sessionStorage after login (set by biller/login.html).
  *   Every API call includes: { headers: { 'Authorization': 'Bearer ' + billerToken } }
  */
 
@@ -19,7 +19,7 @@
 
 // ── GLOBALS ───────────────────────────────────────────────────────────────────
 
-const billerToken = localStorage.getItem('billerToken');
+const billerToken = sessionStorage.getItem('billerToken');
 let pollIntervalId = null;
 let foodItemsCache = []; // all food items from the dropdown API
 
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Show biller username in the top nav
     document.getElementById('navUsername').textContent =
-        localStorage.getItem('billerUsername') || 'Biller';
+        sessionStorage.getItem('billerUsername') || 'Biller';
 
     // Load food items for the dropdown and quick items
     loadFoodItemDropdown();
@@ -253,8 +253,8 @@ function connectToLiveStream() {
     })
     .then(res => {
         if (res.status === 401 || res.status === 403) {
-            localStorage.removeItem('billerToken');
-            localStorage.removeItem('billerUsername');
+            sessionStorage.removeItem('billerToken');
+            sessionStorage.removeItem('billerUsername');
             window.location.href = '/biller/login';
             return null;
         }
@@ -577,9 +577,19 @@ function createToastElement() {
     return el;
 }
 
-function logoutBiller() {
+async function logoutBiller() {
     clearInterval(pollIntervalId);
-    localStorage.removeItem('billerToken');
-    localStorage.removeItem('billerUsername');
-    window.location.href = '/biller/login';
+    try {
+        if (billerToken) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + billerToken }
+            });
+        }
+    } finally {
+        sessionStorage.removeItem('billerToken');
+        sessionStorage.removeItem('billerUsername');
+        window.location.href = '/biller/login';
+    }
 }
+
