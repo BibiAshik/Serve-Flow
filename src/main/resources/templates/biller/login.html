@@ -106,9 +106,9 @@
 
             if (response.ok) {
                 const data = await response.json();
-                // Store the JWT in localStorage — billing.js will use it for all API calls
-                localStorage.setItem('billerToken', data.token);
-                localStorage.setItem('billerUsername', data.username);
+                // Store the JWT in sessionStorage — billing.js will use it for all API calls
+                sessionStorage.setItem('billerToken', data.token);
+                sessionStorage.setItem('billerUsername', data.username);
                 // Redirect to the main billing screen
                 window.location.href = '/biller/billing';
             } else {
@@ -136,9 +136,10 @@
     }
 
     // If already logged in, redirect directly to billing
-    if (localStorage.getItem('billerToken')) {
+    if (sessionStorage.getItem('billerToken')) {
         window.location.href = '/biller/billing';
     }
 </script>
 </body>
 </html>
+
