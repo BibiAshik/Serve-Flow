@@ -2,14 +2,14 @@
  * student.js — Campus Bite student portal JavaScript
  *
  * RESPONSIBILITIES:
- *   1. Authenticate the student (redirect to login if no JWT in localStorage).
+ *   1. Authenticate the student (redirect to login if no JWT in sessionStorage).
  *   2. Load and render the food menu from /api/food/menu.
  *   3. Manage the shopping cart (add, remove, update quantities).
  *   4. Handle the checkout flow (create order → open Razorpay modal → verify payment → show token).
  *   5. Manage the My Orders page separately.
  *
  * JWT STORAGE:
- *   The student JWT is stored in localStorage as 'studentToken'.
+ *   The student JWT is stored in sessionStorage as 'studentToken'.
  *   It is set by the student login page after extracting it from the OAuth2 redirect URL.
  *   Every API call includes: { headers: { 'Authorization': 'Bearer ' + studentToken } }
  */
@@ -18,7 +18,7 @@
 
 // ── GLOBALS ───────────────────────────────────────────────────────────────────
 
-let studentToken = localStorage.getItem('studentToken');
+let studentToken = sessionStorage.getItem('studentToken');
 const savedCart = localStorage.getItem('studentCart');
 let cart = savedCart ? JSON.parse(savedCart) : []; // Array of { item: FoodItemDTO, quantity: number }
 let menuItemsAll = []; // All items loaded from API
@@ -33,10 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
     if (tokenFromUrl) {
-        localStorage.setItem('studentToken', tokenFromUrl);
+        sessionStorage.setItem('studentToken', tokenFromUrl);
         studentToken = tokenFromUrl; // update our script variable
         const name = urlParams.get('name') || '';
-        localStorage.setItem('studentName', decodeURIComponent(name));
+        sessionStorage.setItem('studentName', decodeURIComponent(name));
         // Clean the URL without reloading
         window.history.replaceState({}, document.title, '/student/home');
     }
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Show greeting
-    const studentName = localStorage.getItem('studentName') || '';
+    const studentName = sessionStorage.getItem('studentName') || '';
     const greetingEl = document.getElementById('studentGreeting');
     if (greetingEl) {
         greetingEl.textContent = studentName ? `Hi, ${studentName.split(' ')[0]} 👋` : '';
@@ -362,7 +362,7 @@ async function initiatePayment() {
         const orderData = await orderRes.json();
 
         if (orderRes.status === 401 || orderRes.status === 403) {
-            localStorage.removeItem('studentToken');
+            sessionStorage.removeItem('studentToken');
             window.location.href = '/student/login';
             return;
         }
@@ -380,7 +380,7 @@ async function initiatePayment() {
 
         // Step 2: Open Razorpay checkout modal
         const totalAmountInPaise = Math.round(totalAmount * 100);
-        const studentName = localStorage.getItem('studentName') || 'Student';
+        const studentName = sessionStorage.getItem('studentName') || 'Student';
 
         // Razorpay key ID — should be loaded from backend settings
         // For now, read from a meta tag or use a placeholder
@@ -514,8 +514,18 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-function logoutStudent() {
-    localStorage.removeItem('studentToken');
-    localStorage.removeItem('studentName');
-    window.location.href = '/student/login';
+async function logoutStudent() {
+    try {
+        if (studentToken) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + studentToken }
+            });
+        }
+    } finally {
+        sessionStorage.removeItem('studentToken');
+        sessionStorage.removeItem('studentName');
+        window.location.href = '/student/login';
+    }
 }
+
