@@ -23,13 +23,13 @@ import java.util.Map;
  *              The JWT contains the student's email and role (ROLE_STUDENT).
  *
  * The JWT secret and expiry time are read from application.properties:
- *   jwt.secret         — must be a long random string (at least 32 characters).
- *   jwt.expiration-ms  — token lifetime in milliseconds (default: 86400000 = 24 hours).
+ *   jwt.secret         - must be a long random string (at least 32 characters).
+ *   jwt.expiration-ms  - token lifetime in milliseconds.
  *
  * NEVER hardcode the secret in Java source code. It belongs in application.properties.
  *
  * How the JWT flow works:
- *   1. Client logs in → backend generates a JWT → client stores it in localStorage.
+ *   1. Client logs in → backend generates a JWT → client stores it in sessionStorage.
  *   2. Client attaches JWT as "Authorization: Bearer <token>" on every API request.
  *   3. JwtFilter reads the header, validates the token, and sets the SecurityContext.
  *   4. Spring Security then allows or denies the request based on the role in the token.
@@ -42,8 +42,7 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    // How long a token is valid after creation, in milliseconds.
-    // Injected from application.properties. Default: 86400000 ms = 24 hours.
+    // Default token lifetime after creation, in milliseconds.
     @Value("${jwt.expiration-ms}")
     private long expirationMs;
 
@@ -77,7 +76,7 @@ public class JwtUtil {
             extraClaims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
         }
 
-        return buildToken(extraClaims, userDetails.getUsername());
+        return buildToken(extraClaims, userDetails.getUsername(), expirationMs);
     }
 
     /**
@@ -91,7 +90,7 @@ public class JwtUtil {
     public String generateTokenForStudent(String email, String role) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("role", role);
-        return buildToken(extraClaims, email);
+        return buildToken(extraClaims, email, expirationMs);
     }
 
     /**
@@ -100,14 +99,14 @@ public class JwtUtil {
      *          subject     — the "sub" claim (username or email).
      * Output:  A signed, compact JWT string.
      */
-    private String buildToken(Map<String, Object> extraClaims, String subject) {
+    private String buildToken(Map<String, Object> extraClaims, String subject, long tokenLifetimeMs) {
         long nowMs = System.currentTimeMillis();
 
         return Jwts.builder()
                 .setClaims(extraClaims)            // add role and any other extra claims
                 .setSubject(subject)               // sub = username or email
                 .setIssuedAt(new Date(nowMs))      // iat = current time
-                .setExpiration(new Date(nowMs + expirationMs)) // exp = current + 24h
+                .setExpiration(new Date(nowMs + tokenLifetimeMs)) // exp = current + configured lifetime
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256) // sign with HMAC-SHA256
                 .compact();                        // build and return the token string
     }
@@ -119,6 +118,10 @@ public class JwtUtil {
      */
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
+    }
+
+    public Date extractExpiration(String token) {
+        return extractAllClaims(token).getExpiration();
     }
 
     /**
@@ -169,3 +172,6 @@ public class JwtUtil {
                 .getBody();                     // get the claims payload
     }
 }
+
+
+
