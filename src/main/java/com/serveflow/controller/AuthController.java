@@ -2,14 +2,18 @@ package com.serveflow.controller;
 
 import com.serveflow.dto.request.BillerLoginRequestDTO;
 import com.serveflow.security.JwtUtil;
+import com.serveflow.service.JwtRevocationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -35,10 +39,14 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final JwtRevocationService jwtRevocationService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public AuthController(AuthenticationManager authenticationManager,
+                          JwtUtil jwtUtil,
+                          JwtRevocationService jwtRevocationService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.jwtRevocationService = jwtRevocationService;
     }
 
     /**
@@ -74,5 +82,25 @@ public class AuthController {
                 "username", userDetails.getUsername(),
                 "role", userDetails.getAuthorities().iterator().next().getAuthority()
         ));
+    }
+
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
+        String token = extractBearerToken(request);
+        if (token != null) {
+            Date expiresAt = jwtUtil.extractExpiration(token);
+            jwtRevocationService.revoke(token, expiresAt);
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
+    private String extractBearerToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 }
