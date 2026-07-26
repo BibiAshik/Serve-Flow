@@ -88,7 +88,7 @@
 
 <script>
     // If student already has a valid JWT, skip login and go to home
-    const studentToken = localStorage.getItem('studentToken');
+    const studentToken = sessionStorage.getItem('studentToken');
     if (studentToken) {
         window.location.href = '/student/home';
     }
@@ -97,11 +97,12 @@
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
     if (tokenFromUrl) {
-        localStorage.setItem('studentToken', tokenFromUrl);
+        sessionStorage.setItem('studentToken', tokenFromUrl);
         const name = urlParams.get('name') || '';
-        localStorage.setItem('studentName', decodeURIComponent(name));
+        sessionStorage.setItem('studentName', decodeURIComponent(name));
         window.location.href = '/student/home';
     }
 </script>
 </body>
 </html>
+
