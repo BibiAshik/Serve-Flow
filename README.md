@@ -77,19 +77,17 @@ ServeFlow is a comprehensive, dual-portal web application designed to eliminate 
 
 ## 🛠️ Setup & Installation
 
-### 1. Database Setup
-Ensure you have MySQL running locally. Create a new database:
-```sql
-CREATE DATABASE serveflow_db;
-```
+The easiest way to run ServeFlow locally is using **Docker**. The repository includes a `docker-compose.yml` file that instantly spins up both the Spring Boot application and the MySQL database with zero manual configuration.
 
-### 2. Environment Variables
-Configure your `src/main/resources/application-local.properties` file with the following keys:
+### 1. Prerequisites
+- **Install Docker Desktop:** Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/) for your operating system (Windows, Mac, or Linux).
+- **Ensure Docker is Running:** Open the Docker Desktop app and make sure the engine is running.
+
+### 2. Configure Environment Variables
+Before starting the application, you must configure your security keys. 
+1. Open the existing `src/main/resources/application.properties` file.
+2. Replace the placeholder values with your own secrets (JWT, Google OAuth, and Razorpay API keys):
 ```properties
-# Database
-spring.datasource.username=root
-spring.datasource.password=your_mysql_password
-
 # JWT Security
 jwt.secret=generate_a_very_long_secure_random_string_here
 
@@ -101,19 +99,24 @@ spring.security.oauth2.client.registration.google.client-secret=your_client_secr
 razorpay.key.id=your_razorpay_key
 razorpay.key.secret=your_razorpay_secret
 razorpay.webhook.secret=your_webhook_secret
-
-# Thermal Printer
-app.printer.host=localhost
-app.printer.port=9100
 ```
+*(Note: Database credentials are automatically handled by Docker Compose).*
 
-### 3. Run the Application
-You can run the application directly using Maven:
+### 3. Build and Run
+Open your terminal, navigate to the root folder of the project, and run:
+
 ```bash
-./mvnw spring-boot:run
+docker compose up --build -d
 ```
+Docker will automatically pull the MySQL image, create the `serveflow_db` database, compile the Spring Boot application using the provided `Dockerfile`, and start both containers.
 
 The application will start on `http://localhost:8080`.
+
+### 4. Stop the Application
+To safely shut down the application and database, run:
+```bash
+docker compose down
+```
 
 ---
 
@@ -121,6 +124,16 @@ The application will start on `http://localhost:8080`.
 
 - **Biller Login**: `http://localhost:8080/biller/login`
 - **Student Portal**: `http://localhost:8080/student/home`
+
+> [!WARNING]
+> **Domain Restriction:** By default, the Student Portal Google OAuth2 login is strictly locked to `@sairamtap.edu.in` emails. 
+> 
+> **How to test with your own email:**
+> To allow any Gmail account to log in, simply add this line to the bottom of the `src/main/resources/application.properties` file before running:
+> ```properties
+> app.college-email-domain=@gmail.com
+> ```
+> *(Or leave the value completely blank to allow absolutely any Google account).*
 
 ---
 *Developed with ❤️ to modernize campus dining.*
