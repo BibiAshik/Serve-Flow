@@ -125,8 +125,9 @@ docker compose down
 - **Biller Login**: `http://localhost:8080/biller/login`
 - **Student Portal**: `http://localhost:8080/student/home`
 
+
 > [!WARNING]
-> **Domain Restriction:** By default, the Student Portal Google OAuth2 login is strictly locked to `@sairamtap.edu.in` emails. 
+> **Domain Restriction:** By default, the Student Portal Google OAuth2 login is strictly locked to specific College email domains. 
 > 
 > **How to test with your own email:**
 > To allow any Gmail account to log in, simply add this line to the bottom of the `src/main/resources/application.properties` file before running:
@@ -135,5 +136,13 @@ docker compose down
 > ```
 > *(Or leave the value completely blank to allow absolutely any Google account).*
 
+### 🔒 Live Demonstration (Private)
+The application is currently deployed live on Railway for interview and demonstration purposes only. Because this is an internal campus tool, public access is strictly restricted.
+
+- 🍔 **Biller Portal**: [https://serve-flow-production-10.up.railway.app/biller/login](https://serve-flow-production-10.up.railway.app/biller/login)
+- 🎓 **Student Portal**: [https://serve-flow-production-10.up.railway.app/student/home](https://serve-flow-production-10.up.railway.app/student/home)
+
+> [!NOTE]
+> These live links are provided to prove the production environment is active and also interview demo . However, due to security policies, you will not be able to log in without an authorized college domain account or pre-configured biller credentials.
 ---
 *Developed with ❤️ to modernize campus dining.*
