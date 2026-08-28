@@ -136,6 +136,8 @@ docker compose down
 > ```
 > *(Or leave the value completely blank to allow absolutely any Google account).*
 
+---
+
 ### 🔒 Live Demonstration (Private)
 The application is currently deployed live on Railway for interview and demonstration purposes only. Because this is an internal campus tool, public access is strictly restricted.
 
