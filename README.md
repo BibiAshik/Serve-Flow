@@ -82,6 +82,11 @@ The easiest way to run ServeFlow locally is using **Docker**. The repository inc
 ### 1. Prerequisites
 - **Install Docker Desktop:** Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/) for your operating system (Windows, Mac, or Linux).
 - **Ensure Docker is Running:** Open the Docker Desktop app and make sure the engine is running.
+- **Clone the Repository:**
+  ```bash
+  git clone https://github.com/BibiAshik/Serve-Flow.git
+  cd Serve-Flow
+  ```
 
 ### 2. Configure Environment Variables
 Before starting the application, you must configure your security keys. 
