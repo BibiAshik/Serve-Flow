@@ -352,6 +352,16 @@ input::placeholder {
   color: var(--text-muted);
 }
 
+/* Force Chrome Autofill to match the dark theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--bg-secondary) inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1219,5 +1229,20 @@ code {
   .login-brand-panel {
     width: 100%;
     padding: 40px 20px;
+  }
+  .login-page .login-form-panel {
+    display: none !important;
+  }
+  .login-page .login-container::after {
+    content: "🖥️ Desktop Only: Please open this Biller Portal on a laptop or computer to log in.";
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    background: var(--bg-panel);
   }
 }
